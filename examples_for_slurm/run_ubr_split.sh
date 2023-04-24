@@ -10,8 +10,6 @@
 
 FASTQ_DIR=/scratch/groups/rhiju/rhiju/Novogene/usftp21.novogene.com/01.RawData/RDX112F_RTB000/
 
-#ubr_split.py -n 1200 -s pseudoknot50_puzzle_11318423.tsv.RNA_sequences.fa  -b RTBbarcodes_PK50_RNA.fasta -1  $FASTQ_DIR/RDX112F_RTB000_CKDL230001441-1A_HT3F2DSX5_L4_1.fq.gz -2 $FASTQ_DIR/RDX112F_RTB000_CKDL230001441-1A_HT3F2DSX5_L4_1.fq.gz 
-
-ubr_split.py -q 1000000 -s pseudoknot50_puzzle_11318423.tsv.RNA_sequences.fa  -b RTBbarcodes_PK50_RNA.fasta -1  $FASTQ_DIR/RDX112F_RTB000_CKDL230001441-1A_HT3F2DSX5_L4_1.fq.gz -2 $FASTQ_DIR/RDX112F_RTB000_CKDL230001441-1A_HT3F2DSX5_L4_2.fq.gz 
+ubr_split.py -q 1000000 -s pseudoknot50_puzzle_11318423.tsv.RNA_sequences.fa  -b RTBbarcodes_PK50_RNA.fasta -1  $FASTQ_DIR/RDX112F_RTB000_CKDL230001441-1A_HT3F2DSX5_L4_1.fq.gz -2 $FASTQ_DIR/RDX112F_RTB000_CKDL230001441-1A_HT3F2DSX5_L4_2.fq.gz --output_raw_counts --no_length_cutoff 
 
 echo "DONE"
