@@ -13,10 +13,10 @@ parser = argparse.ArgumentParser(
                     epilog = 'Handles a lot of mangling in RNAMake''s current output.')
 
 parser.add_argument('-O','--outdir',default='OUTPUT')
-
-MAX_LENGTH = 100
+parser.add_argument('-ml','--max_length',default=100,type=int);
 
 args = parser.parse_args()
+MAX_LENGTH = args.max_length
 
 time_start = time.time()
 grepfile = 'ALL.scores'
