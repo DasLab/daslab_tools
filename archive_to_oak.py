@@ -12,7 +12,6 @@ parser = argparse.ArgumentParser(
 )
 
 parser.add_argument('dir_name')
-#parser.add_argument('-nlc','--no_length_cutoff',action = 'store_true')
 
 args = parser.parse_args()
 dir_name =  args.dir_name
@@ -22,7 +21,6 @@ if dir_name == '.' or not( os.path.isdir( os.path.basename(dir_name) ) ) :
     print( 'Must specify a subdirectory of a current directory')
     exit()
 
-USER = os.getenv('USER')
 GROUP = os.getenv('GROUP')
 
 abs_dir_name = os.path.abspath( dir_name )
@@ -32,25 +30,25 @@ def get_oak_dir( current_path, oak_path ):
     if idx == -1:
         return ''
     else:
-        return oak_path+'/'+os.path.dirname(abs_dir_name[idx+len(current_path)+1:])
+        return oak_path+os.path.dirname(abs_dir_name[idx+len(current_path):])
 
 oak_dir = ''
 if len(oak_dir) == 0:
     # 'scratch_group'
-    oak_dir = get_oak_dir( '/scratch/groups/%s/%s' % (GROUP,USER),
-                           '/oak/stanford/groups/%s/sherlock/scratch/%s' % (GROUP,USER) )
+    oak_dir = get_oak_dir( '/scratch/groups/%s/' % (GROUP),
+                           '/oak/stanford/groups/%s/sherlock/scratch/' % (GROUP) )
 if len(oak_dir) == 0:
     # 'scratch'
-    oak_dir = get_oak_dir( '/scratch/users/%s' % USER,
-                           '/oak/stanford/groups/%s/sherlock/scratch/%s' % (GROUP,USER) )
+    oak_dir = get_oak_dir( '/scratch/users/',
+                           '/oak/stanford/groups/%s/sherlock/scratch/' % (GROUP) )
 if len(oak_dir) == 0:
     # 'home'
-    oak_dir = get_oak_dir( '/home/users/%s' % USER,
-                           '/oak/stanford/groups/%s/sherlock/home/%s' % (GROUP,USER) )
+    oak_dir = get_oak_dir( '/home/users/',
+                           '/oak/stanford/groups/%s/sherlock/home/' % (GROUP) )
 if len(oak_dir) == 0:
     # 'group'
-    oak_dir = get_oak_dir( '/home/groups/%s/%s' % (GROUP,USER),
-                           '/oak/stanford/groups/%s/sherlock/home/%s' % (GROUP,USER) )
+    oak_dir = get_oak_dir( '/home/groups/%s/' % (GROUP),
+                           '/oak/stanford/groups/%s/sherlock/home/' % (GROUP) )
 
 if len(oak_dir) == 0:
     print( 'Could not figure out location' )
