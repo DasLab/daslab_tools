@@ -12,8 +12,10 @@ parser = argparse.ArgumentParser(
                     description = 'Go through output of RNAMake runs from rnamake_twoway_display_run.py',
                     epilog = 'Handles a lot of mangling in RNAMake''s current output.')
 
-parser.add_argument('-O','--outdir',default='OUTPUT')
-parser.add_argument('-ml','--max_length',default=100,type=int);
+parser.add_argument('-O','--outdir',default='OUTPUT',help='directory holding output of rnamake_twoway_display_run.py')
+parser.add_argument('-ml','--max_length',default=100,type=int,help='maximum length for a solution')
+parser.add_argument('--choose_min_score',action ='store_true',help='use design_score to select amongst solutions, not length')
+parser.add_argument('-ow','--overwrite',action ='store_true',help='overwrite the ALL.score file with a new grep')
 
 args = parser.parse_args()
 MAX_LENGTH = args.max_length
@@ -21,10 +23,17 @@ MAX_LENGTH = args.max_length
 time_start = time.time()
 grepfile = 'ALL.scores'
 
-if not os.path.exists( grepfile ):
+if not os.path.exists( grepfile ) or args.overwrite:
     command = 'find %s -name default.scores | xargs grep FLEX > %s' % (args.outdir,grepfile)
     print(command)
     os.system(command)
+
+RNA_nts = set(['A','C','G','U'])
+def is_RNA(sequence):
+    for nt in sequence:
+        if nt not in RNA_nts:
+            return False
+    return True
 
 lines = open( grepfile ).readlines()
 solutions = []
@@ -50,8 +59,11 @@ for line in lines:
 
     if len(sequence) == 0: continue
     if len(sequence) > MAX_LENGTH: continue
+    if not is_RNA(sequence): continue
     if len(sequence)!=len(solstring): continue
-    solution = (sequence,solstring,pdbname)
+    if not cols[1].replace('.','').isnumeric():continue
+    design_score = float(cols[1]) # Design score (lower is better)
+    solution = (sequence,solstring,pdbname,design_score)
     solutions.append( solution )
     solutions_by_run[run].append( solution )
 
@@ -62,10 +74,15 @@ for run in runs:
     if len(solutions_for_run) == 0: continue
     best_solution = solutions_for_run[0]
     for solution in solutions_for_run:
-        if len( solution[0] )  < len( best_solution[0] ):
-            best_solution = solution
+        if args.choose_min_score:
+            if solution[3]  < best_solution[3]:
+                best_solution = solution
+        else: # choose based on length
+            if len( solution[0] )  < len( best_solution[0] ):
+                best_solution = solution
     title = '%s/%s' % (run,best_solution[2])
-    data_output.append( (title,best_solution[0],best_solution[1] ) )
+    #print("BEST score", best_solution[3])
+    data_output.append( (title,best_solution[0],best_solution[1],best_solution[3] ) )
 
 # Design perturbing mutations -- truncate longest and most central flex_helix; or insert up to 5 bp.
 data_output_delhelix = []
@@ -74,6 +91,7 @@ for out in data_output:
     title     = out[0]
     sequence  = out[1]
     solstring = out[2]
+    design_score = out[3]
     Npos = []
     for (i,char) in enumerate(solstring):
         if char == 'N': Npos.append(i)
@@ -148,10 +166,12 @@ def output_fasta(filename,data_output):
 
 time_end = time.time()
 print( '\nTotal time: ' + time.strftime("%H:%M:%S",time.gmtime(time_end-time_start) ) )
-print( '\nFound %d min-length solutions, out of total %d runs containing %d solutions with length < %d out of %d total lines\n' % (len(data_output),len(runs),len(solutions),MAX_LENGTH,len(lines)) )
+print( '\nFound %d best solutions, out of total %d runs containing %d solutions with length < %d out of %d total lines\n' % (len(data_output),len(runs),len(solutions),MAX_LENGTH,len(lines)) )
 
-output_fasta( 'rnamake_minlength_solutions.fasta', data_output)
-output_fasta( 'rnamake_minlength_solutions_DELETE_HELIX.fasta', data_output_delhelix )
-output_fasta( 'rnamake_minlength_solutions_INSERT_HELIX.fasta', data_output_inshelix )
+tag = 'minlength'
+if args.choose_min_score: tag = 'bestscore'
+output_fasta( 'rnamake_%s_solutions.fasta' % tag, data_output)
+output_fasta( 'rnamake_%s_solutions_DELETE_HELIX.fasta' % tag, data_output_delhelix )
+output_fasta( 'rnamake_%s_solutions_INSERT_HELIX.fasta' % tag, data_output_inshelix )
 
 
