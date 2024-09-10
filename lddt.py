@@ -1,11 +1,11 @@
-#!env python3
+#!/usr/bin/env python3
 from sys import argv
 import shutil
 from os import system, remove, path
 from glob import glob
 
-# would be easy to update to running singularity version on Sherlock/linux, for now set up Mac
-assert(shutil.which( 'docker' ))
+# currently have docker set up on Mac, and singularity set up on Sherlock
+if not shutil.which( 'docker' ): assert(shutil.which('singularity'))
 files = argv[1:]
 
 if len(files) < 2:
@@ -21,8 +21,12 @@ for infile in files[1:]:
     infile_tmp =  '/tmp/'+path.basename(infile)
     shutil.copyfile( infile, infile_tmp)
     outfile_tmp = '/tmp/out.json'
-    command = 'docker run --platform linux/amd64 --rm -v /tmp:/mnt registry.scicore.unibas.ch/schwede/openstructure:latest compare-structures -r %s  -m %s  -mf pdb --lddt -o %s -v 0' % \
-        ( ref_tmp.replace('/tmp/','/mnt/'), infile_tmp.replace('/tmp/','/mnt/'), outfile_tmp.replace('/tmp/','/mnt/') )
+    if shutil.which('docker'):
+        command = 'docker run --platform linux/amd64 --rm -v /tmp:/mnt registry.scicore.unibas.ch/schwede/openstructure:latest compare-structures -r %s  -m %s  -mf pdb --lddt -o %s -v 0' % \
+                  ( ref_tmp.replace('/tmp/','/mnt/'), infile_tmp.replace('/tmp/','/mnt/'), outfile_tmp.replace('/tmp/','/mnt/') )
+    else:
+        command = 'singularity run --app OST /home/groups/rhiju/rkretsch/openstructure/singularity/ost.img  compare-structures -r %s  -m %s  -mf pdb --lddt -o %s -v 0' % \
+                  ( ref_tmp,infile_tmp,outfile_tmp )
     system(command)
     if path.isfile(outfile_tmp):
         lines = open(outfile_tmp).readlines()
