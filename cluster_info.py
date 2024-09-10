@@ -123,6 +123,7 @@ def strip_home_dirname( clusterdir ):
     clusterdir = clusterdir.replace('Dropbox/','')
     clusterdir = clusterdir.replace('LocalDataAnalysis/','')
     clusterdir = clusterdir.replace('Library/CloudStorage/GoogleDrive-%s@stanford.edu/My Drive/' % user_name,'')
+    clusterdir = clusterdir.replace('Library/CloudStorage/','')
     clusterdir = clusterdir.replace('/scratch/users/%s/' % user_name,'')
     clusterdir = clusterdir.replace('/work/%s/' % user_name,'')
     clusterdir = clusterdir.replace('/home/%s/' % user_name,'')

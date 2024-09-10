@@ -45,7 +45,8 @@ if len(cluster) == 0: cluster_prefix = ''
 commands = []
 for filename in filenames:
     remote_filename = ' ' + cluster_prefix+clusterdir + '/' + filename
-    command = 'rsync -avzL '+ remote_filename + ' . '+' '.join(extra_args)
+    #command = 'rsync -avzL '+ remote_filename + ' . '+' '.join(extra_args)
+    command = 'rsync -avL '+ remote_filename + ' . '+' '.join(extra_args)
     print(command)
     system(command)
     commands.append( command )
