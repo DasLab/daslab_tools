@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from sys import argv
+from sys import argv,stdout
 import shutil
 from os import system, remove, path
 from glob import glob
