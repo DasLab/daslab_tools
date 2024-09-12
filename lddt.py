@@ -27,15 +27,17 @@ for infile in files[1:]:
     else:
         command = 'singularity run --app OST /home/groups/rhiju/rkretsch/openstructure/singularity/ost.img  compare-structures -r %s  -m %s  -mf pdb --lddt -o %s -v 0' % \
                   ( ref_tmp,infile_tmp,outfile_tmp )
-    system(command)
-    if path.isfile(outfile_tmp):
+    errcode = system(command)
+    if not errcode:
+        assert( path.isfile(outfile_tmp) )
         lines = open(outfile_tmp).readlines()
         lddt = 0
         for line in lines:
             pos = line.find('"lddt":')
             if (pos>-1): lddt = float( line[pos+8:].strip().replace(',','') )
         print( '%f,%s' % ( lddt, infile ) )
-    remove( outfile_tmp )
-    remove( infile_tmp )
+        remove( outfile_tmp )
+    if path.isfile(outfile_tmp): remove( infile_tmp )
+    stdout.flush()
 remove( ref_tmp )
 
