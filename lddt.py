@@ -10,6 +10,7 @@ files = argv[1:]
 
 if len(files) < 2:
     print( argv[0]+ " [ref] [model files]" )
+    print( 'Note you might want to use ost.py in daslab_tools repo' )
     exit()
 
 # Copy reference to /tmp/
@@ -22,7 +23,7 @@ for infile in files[1:]:
     shutil.copyfile( infile, infile_tmp)
     outfile_tmp = '/tmp/out.json'
     if shutil.which('docker'):
-        command = 'docker run --platform linux/amd64 --rm -v /tmp:/mnt registry.scicore.unibas.ch/schwede/openstructure:latest compare-structures -r %s  -m %s  -mf pdb --lddt --ilddt -o %s -v 0' % \
+        command = 'docker run --platform linux/amd64 --rm -v /tmp:/mnt registry.scicore.unibas.ch/schwede/openstructure:latest compare-structures -r %s  -m %s  -ft -mf pdb --lddt --ilddt -o %s -v 0' % \
                   ( ref_tmp.replace('/tmp/','/mnt/'), infile_tmp.replace('/tmp/','/mnt/'), outfile_tmp.replace('/tmp/','/mnt/') )
     else:
         command = 'singularity run --app OST /home/groups/rhiju/rkretsch/openstructure/singularity/ost.img  compare-structures -r %s  -m %s  -mf pdb --lddt --ilddt -o %s -v 0' % \
