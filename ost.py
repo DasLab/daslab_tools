@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-from sys import argv,stdout
+from sys import argv,stdout,stderr
 import shutil
-from os import system, remove, path
+from os import system,remove,path,makedirs,rmdir
 from glob import glob
 import argparse
 # currently have docker set up on Mac, and singularity set up on Sherlock
@@ -18,16 +18,20 @@ if not path.exists( args.refpdb ):
     exit(0)
 
 # Copy reference to /tmp/
-ref_tmp = '/tmp/'+path.basename(args.refpdb)
+hashdir = hash(args.refpdb + ' '.join( args.pdb  ))
+tmpdir = '/tmp/%s/' % hashdir
+makedirs( tmpdir, exist_ok = True )
+
+ref_tmp = tmpdir + path.basename(args.refpdb)
 shutil.copyfile( args.refpdb, ref_tmp)
 print( '%s,%s,%s,%s,%s,%s' % ( 'lddt', 'tm_score', 'ilddt', 'ics', 'ips', 'model' ) )
 for infile in args.pdb:
     if not path.exists( infile ):
         stderr.write( 'Could not find model PDB file: '+infile+'\n' )
         continue
-    infile_tmp =  '/tmp/'+path.basename(infile)
+    infile_tmp =  tmpdir + path.basename(infile)
     shutil.copyfile( infile, infile_tmp)
-    outfile_tmp = '/tmp/out.json'
+    outfile_tmp = tmpdir + 'out.json'
     if shutil.which('docker'):
         command = 'docker run --platform linux/amd64 --rm -v /tmp:/mnt registry.scicore.unibas.ch/schwede/openstructure:latest compare-structures -r %s  -m %s  -ft -mf pdb --lddt --ilddt --tm-score --ips --ics -o %s -v 0' % \
                   ( ref_tmp.replace('/tmp/','/mnt/'), infile_tmp.replace('/tmp/','/mnt/'), outfile_tmp.replace('/tmp/','/mnt/') )
@@ -59,4 +63,4 @@ for infile in args.pdb:
     remove( infile_tmp )
     stdout.flush()
 remove( ref_tmp )
-
+rmdir( tmpdir )
