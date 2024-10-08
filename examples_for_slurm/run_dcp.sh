@@ -24,7 +24,7 @@ echo "Copying ${src_dir} to ${target_dir}..."
 
 ml reset
 ml system mpifileutils
-srun -n 16 dcp ${src_dir} ${target_dir}
+srun -n 16 dcp -p ${src_dir} ${target_dir}
 # reset modules.
 source ~/.bash_profile
 

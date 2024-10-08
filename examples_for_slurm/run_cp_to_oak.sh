@@ -8,5 +8,8 @@
 #SBATCH --mem=8G
 ##SBATCH --mail-type=ALL
 
-cp -r usftp21.novogene.com/01.RawData/RDX112F_RTB000 /oak/stanford/groups/rhiju/sherlock/scratch/rhiju/Novogene/
+DIRNAME=OK45_Test2
+cp -r  usftp21.novogene.com/01.RawData/$DIRNAME  /oak/stanford/groups/rhiju/sherlock/scratch/rhiju/Novogene/
+md5sum  /oak/stanford/groups/rhiju/sherlock/scratch/rhiju/Novogene/${DIRNAME}/*gz
+cat  /oak/stanford/groups/rhiju/sherlock/scratch/rhiju/Novogene/${DIRNAME}/MD5.txt
 echo "DONE"
