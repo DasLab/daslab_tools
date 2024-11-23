@@ -11,6 +11,8 @@ parser = argparse.ArgumentParser(description='Run USalign on a bunch of PDBs.')
 
 parser.add_argument('refpdb', help='Reference PDB file')
 parser.add_argument('pdb', type=str, nargs='+', help='PDB file to align')
+parser.add_argument('--rna', action='store_true',  help='force residue number alignment')
+parser.add_argument('--lddt_no_checks', action='store_true',  help='turn off stereochemical check in lddt')
 
 args = parser.parse_args()
 if not path.exists( args.refpdb ):
@@ -38,6 +40,8 @@ for infile in args.pdb:
     else:
         command = 'singularity run --app OST /home/groups/rhiju/rkretsch/openstructure/singularity/ost.img  compare-structures -r %s  -m %s  -mf pdb --lddt --ilddt  --tm-score --ips --ics -o %s -v 0' % \
                   ( ref_tmp,infile_tmp,outfile_tmp )
+    if args.rna: command += ' -rna'
+    if args.lddt_no_checks: command += ' --lddt-no-stereochecks'
     errcode = system(command)
     lddt = 0
     tm_score = 0
