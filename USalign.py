@@ -12,7 +12,8 @@ parser = argparse.ArgumentParser(description='Run USalign on a bunch of PDBs.')
 parser.add_argument('refpdb', help='Reference PDB file')
 parser.add_argument('pdb', type=str, nargs='+', help='PDB file to align')
 parser.add_argument('-dump', action='store_true', help='Prepare superposition PDB as .TMsup.pdb ')
-parser.add_argument('-TMscore', type=int,default=0, help='Prepare superposition PDB as .TMsup.pdb ')
+parser.add_argument('-TMscore', type=int,default=0, help='integer setting for TMscore (0 by default means ignore sequence) ')
+parser.add_argument('-RNA', action='store_true', help='only align RNA chains')
 
 args = parser.parse_args()
 
@@ -30,6 +31,7 @@ for i in range(len(args.pdb)):
         exit(0)
 
     cmdline = '%s %s %s -TMscore %d' % (EXEC, args.pdb[i], args.refpdb, args.TMscore)
+    if args.RNA: cmdline += ' -mol RNA'
     if args.dump:
         sup_model_file = args.pdb[i].replace( '.pdb','' ) + '.TMsup.pdb'
         cmdline += ' -o %s' % sup_model_file
