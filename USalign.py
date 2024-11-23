@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 import string
 from glob import glob
 from sys import argv,stderr,exit
