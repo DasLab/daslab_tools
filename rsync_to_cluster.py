@@ -52,7 +52,8 @@ cluster_prefix = cluster+':'
 if len(cluster) == 0: cluster_prefix = ''
 
 # Do it!
-command = 'rsync -avzL '+dir+' '+cluster_prefix+clusterdir+' '+' '.join(extra_args)
+#command = 'rsync -avzL '+dir+' '+cluster_prefix+clusterdir+' '+' '.join(extra_args)
+command = 'rsync -avL '+dir+' '+cluster_prefix+clusterdir+' '+' '.join(extra_args)
 print(command)
 system(command)
 print()
