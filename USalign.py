@@ -14,6 +14,7 @@ parser.add_argument('pdb', type=str, nargs='+', help='PDB file to align')
 parser.add_argument('-dump', action='store_true', help='Prepare superposition PDB as .TMsup.pdb ')
 parser.add_argument('-TMscore', type=int,default=0, help='integer setting for TMscore (0 by default means ignore sequence) ')
 parser.add_argument('-RNA', action='store_true', help='only align RNA chains')
+parser.add_argument('-mm', action='store_true', help='align multimer')
 
 args = parser.parse_args()
 
@@ -32,6 +33,7 @@ for i in range(len(args.pdb)):
 
     cmdline = '%s %s %s -TMscore %d' % (EXEC, args.pdb[i], args.refpdb, args.TMscore)
     if args.RNA: cmdline += ' -mol RNA'
+    if args.mm:  cmdline += ' -mm 2 -ter 1'
     if args.dump:
         sup_model_file = args.pdb[i].replace( '.pdb','' ) + '.TMsup.pdb'
         cmdline += ' -o %s' % sup_model_file
