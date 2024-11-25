@@ -27,25 +27,27 @@ slurm_file_dir = 'slurm_files'
 os.makedirs(slurm_file_dir, exist_ok=True )
 fid_slurm = open( '%s/run_slurm_%03d.sh' % (slurm_file_dir, slurm_file_count), 'w' )
 
-sbatch_preface = '#!/bin/bash\n#SBATCH --job-name=%s\n#SBATCH --output=%s.o%%j\n#SBATCH --error=%s.e%%j\n#SBATCH --partition=biochem,owners\n#SBATCH --time=48:00:00\n#SBATCH -n %d\n#SBATCH -N 1\n#SBATCH --mem=%dG\n\n' \
-                 % (job_name,job_name,job_name,args.jobs_per_slurm_node,args.memory_per_job * args.jobs_per_slurm_node)
-fid_slurm.write( sbatch_preface )
 
 fid_sbatch_commands = open( 'sbatch_commands.sh', 'w')
-
 num_command_lines = len( command_lines)
+commands = []
 for (i,command_line) in enumerate(command_lines):
     command = command_line
     if command[-1] != '&': command += '&'
-    fid_slurm.write( command +'\n' )
+    commands.append( command )
     if (i+1) % args.jobs_per_slurm_node == 0 or (i+1) == num_command_lines:
-        fid_sbatch_commands.write('sbatch %s\n' % fid_slurm.name )
+        njobs = len(commands)
+        sbatch_preface = '#!/bin/bash\n#SBATCH --job-name=%s\n#SBATCH --output=%s.o%%j\n#SBATCH --error=%s.e%%j\n#SBATCH --partition=biochem,owners\n#SBATCH --time=48:00:00\n#SBATCH -n %d\n#SBATCH -N 1\n#SBATCH --mem=%dG\n\n' \
+                 % (job_name,job_name,job_name,njobs,args.memory_per_job * njobs)
+        fid_slurm.write( sbatch_preface )
+        for command in commands: fid_slurm.write( command +'\n' )
         fid_slurm.write('\nwait\necho "DONE"\n')
         fid_slurm.close()
+        fid_sbatch_commands.write('sbatch %s\n' % fid_slurm.name )
         slurm_file_count += 1
         if (i+1) < num_command_lines:
             fid_slurm = open( '%s/run_slurm_%03d.sh' % (slurm_file_dir, slurm_file_count), 'w' )
-            fid_slurm.write( sbatch_preface )
+            commands = []
 
 print( "\nTo queue up %d slurm jobs with %d command lines on sherlock you can run:\n source %s\n" % (slurm_file_count-1,num_command_lines,fid_sbatch_commands.name) )
 
