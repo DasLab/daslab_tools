@@ -14,15 +14,21 @@ parser.add_argument('pdb', type=str, nargs='+', help='PDB file to align')
 parser.add_argument('-dump', action='store_true', help='Prepare superposition PDB as .TMsup.pdb ')
 parser.add_argument('-TMscore', type=int,default=0, help='integer setting for TMscore (0 by default means ignore sequence) ')
 parser.add_argument('-RNA', action='store_true', help='only align RNA chains')
-parser.add_argument('-mm', action='store_true', help='align multimer')
+parser.add_argument('-force_mm', action='store_true', help='force align multimer (default auto-detect)')
+parser.add_argument('-force_monomer', action='store_true', help='force align monomer (default auto-detect)')
 
 args = parser.parse_args()
-
-args.pdb[0]
 
 if not exists( args.refpdb ):
     stderr.write( 'Could not find reference PDB file: '+args.refpdb+'\n' )
     exit(0)
+
+# autodetect whether to use multimer
+lines = popen( 'grep TER %s ' % args.refpdb ).readlines()
+mm = len(lines)>1
+if args.force_mm: mm = True
+if args.force_monomer: mm = False
+
 
 EXEC = 'USalign'
 
@@ -33,12 +39,11 @@ for i in range(len(args.pdb)):
 
     cmdline = '%s %s %s -TMscore %d' % (EXEC, args.pdb[i], args.refpdb, args.TMscore)
     if args.RNA: cmdline += ' -mol RNA'
-    if args.mm:  cmdline += ' -mm 1 -ter 1'
+    if mm:  cmdline += ' -mm 1 -ter 1'
     if args.dump:
         sup_model_file = args.pdb[i].replace( '.pdb','' ) + '.TMsup.pdb'
         cmdline += ' -o %s' % sup_model_file
     lines = popen( cmdline ).readlines()
-
 
     TMscore = 0
     nalign = 0
