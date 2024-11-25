@@ -33,7 +33,7 @@ for i in range(len(args.pdb)):
 
     cmdline = '%s %s %s -TMscore %d' % (EXEC, args.pdb[i], args.refpdb, args.TMscore)
     if args.RNA: cmdline += ' -mol RNA'
-    if args.mm:  cmdline += ' -mm 2 -ter 1'
+    if args.mm:  cmdline += ' -mm 1 -ter 1'
     if args.dump:
         sup_model_file = args.pdb[i].replace( '.pdb','' ) + '.TMsup.pdb'
         cmdline += ' -o %s' % sup_model_file
