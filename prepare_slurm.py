@@ -20,7 +20,7 @@ job_name = args.job_name
 if len(job_name)==0: job_name = commands_file
 
 assert( os.path.isfile( commands_file ) )
-command_lines = [x.strip()  for x in open( commands_file ).readlines() if len(x.strip())>0]
+command_lines = [x.strip()  for x in open( commands_file ).readlines() if len(x.strip())>0 and x.strip()[0] != '#' ]
 
 slurm_file_count = 1
 slurm_file_dir = 'slurm_files'
