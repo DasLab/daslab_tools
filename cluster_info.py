@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from os.path import expanduser,expandvars,basename
+from os import popen
 import subprocess
 
 user_name = basename( expanduser('~') )
@@ -124,6 +125,10 @@ def cluster_check( cluster_in ):
         cluster = '%s@comet.sdsc.xsede.org' % comet_user_name
         cluster_dir = '/home/%s/' % comet_user_name
 
+    hostname=popen('hostname').readlines()[0]
+    if cluster.find('sherlock')>-1 and hostname[:2]=='sh' and hostname.find('stanford.edu')>-1:  # local transfer on Sherlock
+        cluster = ''
+
     return (cluster,cluster_dir)
 
 
@@ -134,6 +139,7 @@ def strip_home_dirname( clusterdir ):
     clusterdir = clusterdir.replace('Library/CloudStorage/GoogleDrive-%s@stanford.edu/My Drive/' % user_name,'')
     clusterdir = clusterdir.replace('Library/CloudStorage/','')
     clusterdir = clusterdir.replace('/scratch/users/%s/' % user_name,'')
+    clusterdir = clusterdir.replace('/scratch/groups/rhiju/%s/' % user_name,'')
     clusterdir = clusterdir.replace('/work/%s/' % user_name,'')
     clusterdir = clusterdir.replace('/home/%s/' % user_name,'')
     clusterdir = clusterdir.replace('/home1/%s/%s/' % ( xsede_dir_number, xsede_user_name ),'')

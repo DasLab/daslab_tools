@@ -44,7 +44,9 @@ clusterdir = remotedir
 clusterdir += strip_home_dirname( abspath('.') )
 
 # make sure directory on cluster is ready for files.
-command = 'ssh ' + cluster + ' mkdir -p '+clusterdir
+command = 'mkdir -p '+clusterdir
+if len(cluster)>0:
+    command = 'ssh ' + cluster + ' ' + command
 print(command)
 system(command)
 
