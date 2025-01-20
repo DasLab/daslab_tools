@@ -126,7 +126,7 @@ def cluster_check( cluster_in ):
         cluster_dir = '/home/%s/' % comet_user_name
 
     hostname=popen('hostname').readlines()[0]
-    if cluster.find('sherlock')>-1 and hostname[:2]=='sh' and hostname.find('stanford.edu')>-1:  # local transfer on Sherlock
+    if cluster.find('sherlock')>-1 and (hostname[:4]=='sh02' or hostname[:r]=='sh03'):  # local transfer on Sherlock
         cluster = ''
 
     return (cluster,cluster_dir)
