@@ -33,7 +33,7 @@ num_command_lines = len( command_lines)
 commands = []
 for (i,command_line) in enumerate(command_lines):
     command = command_line
-    if command[-1] != '&': command += '&'
+    if command[-1] != '&': command += ' &'
     commands.append( command )
     if (i+1) % args.jobs_per_slurm_node == 0 or (i+1) == num_command_lines:
         njobs = len(commands)
