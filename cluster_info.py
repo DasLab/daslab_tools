@@ -16,7 +16,7 @@ xsede_dir_number = expandvars( '$XSEDE_DIR_NUMBER' )
 
 def cluster_check( cluster_in ):
     clusterlist = [ 'syd','niau','seth','bes','hapy','apep','gebb','ptah','yah','isis','yah','maat','nut','fin','dig','biox2','biox2_scratch','biox3','biox3_scratch','vanlang_scratch','ade','ade.stanford.edu','steele','steele_scratch','tg-condor','tg-condor_scratch','abe','ncsa','abe_scratch','ade_scratch','vanlang','kwipapat','kwip','lovejoy','tsuname','lovejoy_scratch','backup','lonestar','ranger','lonestar_work','lonestar_scratch','trestles','stampede','stampede_scratch',\
-                    'sherlock', 'comet', 'sherlock','sherlock_scratch','sherlock_group','sherlock_scratch_group','scratch','scratch_group','group','sherlock_oak','oak' ];
+                    'sherlock', 'comet', 'sherlock','sherlock_scratch','sherlock_group','sherlock_scratch_group','scratch','scratch_group','group','sg','ss','sherlock_oak','oak'];
 
     cluster = cluster_in
     if cluster not in clusterlist:
@@ -28,7 +28,9 @@ def cluster_check( cluster_in ):
     old_teragrid_user_name = 'dasr' # defunct
 
     if cluster == 'scratch': cluster = 'sherlock_scratch'
+    if cluster == 'ss': cluster = 'sherlock_scratch'
     if cluster == 'scratch_group': cluster = 'sherlock_scratch_group'
+    if cluster == 'sg': cluster = 'sherlock_scratch_group'
     if cluster == 'group': cluster = 'sherlock_group'
     if cluster == 'oak': cluster = 'sherlock_oak'
     if cluster == 'biox2': cluster = 'biox2.stanford.edu'
