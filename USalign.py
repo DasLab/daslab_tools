@@ -16,6 +16,7 @@ parser.add_argument('-TMscore', type=int,default=0, help='integer setting for TM
 parser.add_argument('-RNA', action='store_true', help='only align RNA chains')
 parser.add_argument('-force_mm', action='store_true', help='force align multimer (default auto-detect)')
 parser.add_argument('-force_monomer', action='store_true', help='force align monomer (default auto-detect)')
+parser.add_argument('-atom', default=" C3'", help='atom representative, 4 characters (default: " C3\'\") ')
 
 args = parser.parse_args()
 
@@ -37,7 +38,7 @@ for i in range(len(args.pdb)):
         stderr.write( 'Could not find PDB file: '+args.pdb[i]+'\n' )
         exit(0)
 
-    cmdline = '%s %s %s -TMscore %d' % (EXEC, args.pdb[i], args.refpdb, args.TMscore)
+    cmdline = '%s %s %s -TMscore %d -atom "%4s"' % (EXEC, args.pdb[i], args.refpdb, args.TMscore, args.atom)
     if args.RNA: cmdline += ' -mol RNA'
     if mm:  cmdline += ' -mm 1 -ter 1'
     if args.dump:
