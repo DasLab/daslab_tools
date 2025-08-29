@@ -1,0 +1,8 @@
+RNA_TOOLS="$(dirname "$0")"
+
+#Runs the commands
+python $RNA_TOOLS/sym_link.py
+
+#Add the following lines to your ~/.bashrc
+export PATH=$PATH:$RNA_TOOLS/bin/
+export PYTHONPATH=$PYTHONPATH:$RNA_TOOLS/bin/
