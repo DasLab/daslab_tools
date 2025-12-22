@@ -43,6 +43,9 @@ username = basename( expanduser('~') )
 clusterdir = remotedir
 clusterdir += strip_home_dirname( abspath('.') )
 
+clusterdir = '"' + clusterdir + '"'
+#clusterdir = clusterdir.replace(' ','\ ') # space issues?
+
 # make sure directory on cluster is ready for files.
 command = 'mkdir -p '+clusterdir
 if len(cluster)>0:

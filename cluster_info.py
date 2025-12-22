@@ -113,7 +113,7 @@ def cluster_check( cluster_in ):
 
     if cluster == 'local':
         cluster = ''
-        cluster_dir = '~/LocalDataAnalysis/'
+        cluster_dir = '/Users/%s/LocalDataAnalysis/' % user_name
 
     if cluster == 'abe_scratch':
         cluster = '%s@login-abe.ncsa.teragrid.org' % xsede_user_name
@@ -129,7 +129,7 @@ def cluster_check( cluster_in ):
 
     if cluster == 'local':
         cluster = ''
-        cluster_dir = '~/LocalDataAnalysis/'
+        cluster_dir = '/Users/%s/LocalDataAnalysis/' % user_name
 
     if cluster == 'comet':
         cluster = '%s@comet.sdsc.xsede.org' % comet_user_name
