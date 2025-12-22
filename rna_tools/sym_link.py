@@ -1,6 +1,6 @@
 import os, errno
 from os import chdir,getcwd
-from os.path import basename,dirname
+from os.path import basename,dirname,abspath
 import glob
 from sys import argv
 
@@ -16,11 +16,13 @@ from sys import argv
 #if not os.access('/path/to/folder', os.W_OK): exit( 0 )
 
 CWD = getcwd()
-chdir( dirname( argv[0] ) )
+chdir( dirname( abspath(argv[0]) ) )
 
 for f in glob.glob('./bin/*'):
     try: os.remove(f)
     except: pass
+
+os.makedirs( 'bin', exist_ok = True)
 
 for dirpath, dirnames, filenames in os.walk('./'):
     if len( basename(dirpath) ) == 0 or basename(dirpath)[0] == '.' or basename(dirpath) == 'bin':
@@ -28,7 +30,7 @@ for dirpath, dirnames, filenames in os.walk('./'):
     for f in filenames:
         filename = os.path.join(dirpath, f)
         if filename[-3:] == '.py':
-            #print filename
+            #print( filename )
             file1 = '../' + filename
             file2 = './bin/' + f
             try:
