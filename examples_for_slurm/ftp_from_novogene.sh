@@ -7,11 +7,16 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=8G
 
-DIRNAME=PK50_ModU_Salt
-#wget -r -c ftp://X202SC24086678-Z01-F003:fdkarp94@usftp21.novogene.com:21/
-mv usftp21.novogene.com/01.RawData/${DIRNAME} .
+# Figure this out, and very ftp access, from a quick pilot run with "bash ftp_from_novogene.sh"
+DIRNAME=MOHCA_pilot2
+
+# This is new command for ftp -- copy/paste from Novogene e-mail 
+lftp -c 'set sftp:auto-confirm yes;set net:max-retries 20;open sftp://X202SC25037762-Z01-F004:yeyd5j9s@usftp23.novogene.com; mirror --verbose --use-pget-n=8 -c'
+
+mv 01.RawData/${DIRNAME} .
 md5sum ${DIRNAME}/*gz
 cat ${DIRNAME}/MD5.txt
+
 echo "If MD5 matches, type:"
 echo " rm -rf usftp21.novogene.com"
 echo "DONE"
