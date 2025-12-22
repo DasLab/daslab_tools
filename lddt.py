@@ -3,6 +3,7 @@ from sys import argv,stdout
 import shutil
 from os import system, remove, path
 from glob import glob
+import math
 
 # currently have docker set up on Mac, and singularity set up on Sherlock
 if not shutil.which( 'docker' ): assert(shutil.which('singularity'))
@@ -29,16 +30,19 @@ for infile in files[1:]:
         command = 'singularity run --app OST /home/groups/rhiju/rkretsch/openstructure/singularity/ost.img  compare-structures -r %s  -m %s  -mf pdb --lddt --ilddt -o %s -v 0' % \
                   ( ref_tmp,infile_tmp,outfile_tmp )
     errcode = system(command)
-    lddt = 0
-    ilddt = 0
+    lddt = -1
+    ilddt = -1
     if not errcode:
         assert( path.isfile(outfile_tmp) )
         lines = open(outfile_tmp).readlines()
         for line in lines:
+            print(line.strip())
             pos = line.find('"lddt":')
-            if (pos>-1): lddt = float( line[pos+8:].strip().replace(',','') )
+            if (pos>-1 and lddt == -1): lddt = float( line[pos+8:].strip().replace(',','') )
             pos = line.find('"ilddt":')
-            if (pos>-1): ilddt = float( line[pos+9:].strip().replace(',','').replace('null','nan') )
+            if (pos>-1 and ilddt == -1): ilddt = float( line[pos+9:].strip().replace(',','').replace('null','nan') )
+    if lddt == -1: lddt = math.nan
+    if ilddt == -1: ilddt = math.nan
     print( '%f,%f,%s' % ( lddt, ilddt, infile ) )
     if path.isfile(outfile_tmp): remove( outfile_tmp )
     remove( infile_tmp )
