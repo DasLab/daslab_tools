@@ -31,7 +31,7 @@ def make_tag_with_dashes( int_vector, char_vector = 0, segid_vector = 0 ):
                 assert( len( char_vector[i-1] ) == 1 )
                 tag += char_vector[i-1]+':'
             if segid_vector[i-1] != "    ":
-                print ( segid_vector )
+                #print ( segid_vector )
                 assert( len( segid_vector[i-1] ) == 4 )
                 tag += segid_vector[i-1].strip()+":"
             if stop_res > start_res:
@@ -69,7 +69,7 @@ def make_tag_from_list_of_int_ranges( list_of_int_ranges ):
     tag = ''
     for int_range in list_of_int_ranges:
         tag +=' '+make_tag_from_int_range( int_range )
-    return tag 
+    return tag
 
 
 def make_tag_from_int_range( int_range ):
@@ -81,7 +81,7 @@ def make_tag_from_int_range( int_range ):
     if ':' in int_range:
         chain = int_range.split(':')[0]
         int_range = int_range.split(':')[1]
-    else:  
+    else:
         int_range = int_range
     if '-' in int_range:
         first_idx = int(int_range.split('-')[0])
