@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import os, errno
 from os import chdir,getcwd
 from os.path import basename,dirname,abspath
@@ -22,7 +23,7 @@ for f in glob.glob('./bin/*'):
     try: os.remove(f)
     except: pass
 
-os.makedirs( 'bin', exist_ok = True)
+if not( os.path.exists('bin') ): os.makedirs( 'bin' )
 
 for dirpath, dirnames, filenames in os.walk('./'):
     if len( basename(dirpath) ) == 0 or basename(dirpath)[0] == '.' or basename(dirpath) == 'bin':
