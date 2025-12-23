@@ -19,19 +19,22 @@ def extract_chain_from_cif(cif_file, chain_id, output_file, C1prime_only = False
     # Open a new PDB file to write the specified chain
     with open(output_file, 'w') as pdb_file:
         # Iterate through the model and chains to fetch the desired chain
-        for model in structure:
+        found_chain = False
+        for model in structure: # just do first model!
             for chain in model:
                 #print(chain.id)
                 if chain.id == chain_id:
+                    found_chain = True
                     # Write the atoms of the specified chain to the PDB file
                     for residue in chain:
                         for atom in residue:
                             if C1prime_only and not atom.name=="C1'": continue
                             # Format and write atom in PDB format
                             pdb_file.write(
-                                f'ATOM  {atom.serial_number:>5d}  {atom.name:4s}{residue.resname:>3s}{chain.id[-2:]:>2s}{residue.id[1]:>4d}{residue.id[2]:1s}   {atom.coord[0]:>8.3f}{atom.coord[1]:>8.3f}{atom.coord[2]:>8.3f}{atom.occupancy:>6.2f}{atom.bfactor:>6.2f}           {atom.element}\n'
+                                f'ATOM  {str(atom.serial_number)[-5:]:>5s}  {atom.name:4s}{residue.resname:>3s}{chain.id[-2:]:>2s}{residue.id[1]:>4d}{residue.id[2]:1s}   {atom.coord[0]:>8.3f}{atom.coord[1]:>8.3f}{atom.coord[2]:>8.3f}{atom.occupancy:>6.2f}{atom.bfactor:>6.2f}           {atom.element}\n'
                             )
                             num_lines += 1
+            if found_chain: break
 
     print(f"Successfully extracted {num_lines} lines from chain {chain_id} to {output_file}")
 
