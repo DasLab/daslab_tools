@@ -42,7 +42,8 @@ for pdb in args.pdb:
         globfiles = glob.glob( pdb )
         if len( globfiles ) == 0:
             stderr.write( 'Could not find PDB file: '+pdb+'\n' )
-            exit(0)
+            continue
+            #exit(0)
         pdbs.extend( sorted(globfiles) )
 
 if args.tabular:
@@ -52,7 +53,7 @@ for i in range(len(pdbs)):
 
     cmdline = '%s %s %s -TMscore %d -atom "%4s"' % (EXEC, pdbs[i], args.refpdb, args.TMscore, args.atom)
     if args.RNA: cmdline += ' -mol RNA'
-    if mm:  cmdline += ' -mm 1 -ter 1'
+    if mm:  cmdline += ' -mm 1 -ter 0'
     if args.dump:
         sup_model_file = pdbs[i].replace( '.pdb','' ) + '.TMsup.pdb'
         cmdline += ' -o %s' % sup_model_file
