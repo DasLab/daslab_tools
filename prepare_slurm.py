@@ -13,7 +13,8 @@ parser.add_argument('commands_file',help='Text file with all commands in separat
 parser.add_argument('-j','--jobs_per_slurm_node', default=24,type=int,help='Number of jobs for each node' )
 parser.add_argument('-m','--memory_per_job', default=2,type=int,help='Number of Gb memory per job. Assume one core per job!')
 parser.add_argument('-n','--job_name', default='',help='Name of job for slurm')
-parser.add_argument('-t','--job_time', default=48,type=int,help='Number of hours to request per node')
+parser.add_argument('-t','--job_time', default=48,type=int,help='Number of hours to request per node (default 48)')
+parser.add_argument('-b','--bundle', default=1,type=int,help='Number of commands to bundle (default 1)')
 
 args = parser.parse_args()
 commands_file = args.commands_file
@@ -23,15 +24,29 @@ if len(job_name)==0: job_name = commands_file.replace('.sh','').replace('.txt','
 assert( os.path.isfile( commands_file ) )
 command_lines = [x.strip()  for x in open( commands_file ).readlines() if len(x.strip())>0 and x.strip()[0] != '#' ]
 
+# bundle command lines together
+if args.bundle > 1:
+    command_lines_bundle = []
+    command = ''
+    for (i,command_line) in enumerate(command_lines):
+        if ( i % args.bundle == 0 ):
+            if len(command)>0: command_lines_bundle.append( command )
+            command = ''
+        else:
+            command += ' && '
+        if command_line.endswith('&'): command_line = command_line[:-1]
+        command += command_line
+    print( f'Bundled {len(command_lines)} commands into {len(command_lines_bundle)}' )
+    command_lines = command_lines_bundle
+
 slurm_file_count = 1
 slurm_file_dir = 'slurm_files'
 os.makedirs(slurm_file_dir, exist_ok=True )
 fid_slurm = open( '%s/run_slurm_%03d.sh' % (slurm_file_dir, slurm_file_count), 'w' )
-
-
 fid_sbatch_commands = open( 'sbatch_commands.sh', 'w')
 fid_bash_commands = open( 'bash_commands.sh', 'w')
 num_command_lines = len( command_lines)
+
 commands = []
 for (i,command_line) in enumerate(command_lines):
     command = command_line
