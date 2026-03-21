@@ -20,6 +20,7 @@ parser.add_argument('-force_monomer', action='store_true', help='force align mon
 parser.add_argument('-atom', default=" C3'", help='atom representative, 4 characters (default: " C3\'\") ')
 parser.add_argument('-t','--tabular', action='store_true', help='output in csv format')
 parser.add_argument('--hetatm',action='store_true', help='Use heteroatom residues in alignment')
+parser.add_argument('-ter',type=int,default=0,help='USalign mode to handle TER in multichain mode')
 
 args = parser.parse_args()
 
@@ -54,7 +55,7 @@ for i in range(len(pdbs)):
 
     cmdline = '%s %s %s -TMscore %d -atom "%4s"' % (EXEC, pdbs[i], args.refpdb, args.TMscore, args.atom)
     if args.RNA: cmdline += ' -mol RNA'
-    if mm:  cmdline += ' -mm 1 -ter 0'
+    if mm:  cmdline += ' -mm 1 -ter %d' % args.ter
     if args.hetatm:  cmdline += ' -het 1'
     if args.dump:
         sup_model_file = pdbs[i].replace( '.pdb','' ) + '.TMsup.pdb'
