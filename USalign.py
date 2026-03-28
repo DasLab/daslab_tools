@@ -17,6 +17,7 @@ parser.add_argument('-TMscore', type=int,default=0, help='integer setting for TM
 parser.add_argument('-RNA', action='store_true', help='only align RNA chains')
 parser.add_argument('-force_mm', action='store_true', help='force align multimer (default auto-detect)')
 parser.add_argument('-force_monomer', action='store_true', help='force align monomer (default auto-detect)')
+parser.add_argument('-mm', default=-1,type=int, help='force specific -mm in USalign')
 parser.add_argument('-atom', default=" C3'", help='atom representative, 4 characters (default: " C3\'\") ')
 parser.add_argument('-t','--tabular', action='store_true', help='output in csv format')
 parser.add_argument('--hetatm',action='store_true', help='Use heteroatom residues in alignment')
@@ -30,9 +31,11 @@ if not exists( args.refpdb ):
 
 # autodetect whether to use multimer
 lines = popen( 'grep TER %s ' % args.refpdb ).readlines()
-mm = len(lines)>1
-if args.force_mm: mm = True
-if args.force_monomer: mm = False
+use_mm = len(lines)>1
+if args.force_mm: use_mm = True
+
+if args.mm > -1: assert( not args.force_mm and not args.force_monomer)
+
 
 EXEC = 'USalign'
 
@@ -55,7 +58,8 @@ for i in range(len(pdbs)):
 
     cmdline = '%s %s %s -TMscore %d -atom "%4s"' % (EXEC, pdbs[i], args.refpdb, args.TMscore, args.atom)
     if args.RNA: cmdline += ' -mol RNA'
-    if mm:  cmdline += ' -mm 1 -ter %d' % args.ter
+    if use_mm and not args.force_monomer and not args.mm > -1:  cmdline += ' -mm 1 -ter %d' % args.ter # legacy
+    if args.mm > -1: cmdline += ' -mm %d -ter %d' % (args.mm,args.ter)
     if args.hetatm:  cmdline += ' -het 1'
     if args.dump:
         sup_model_file = pdbs[i].replace( '.pdb','' ) + '.TMsup.pdb'
