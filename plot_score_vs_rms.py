@@ -51,7 +51,7 @@ def make_plot(filepaths):
         out_png = os.path.splitext(filepath)[0] + '.png'
 
         fig, ax = plt.subplots(figsize=(8, 6))
-        ax.scatter(df[rms_col], df['score'], s=10, alpha=0.5, linewidths=0,
+        ax.scatter(df[rms_col], df['score'], s=30, alpha=0.5, linewidths=0,
                    color=colors[0])
         ax.set_xlabel(rms_col)
         ax.set_ylabel('score')
@@ -65,7 +65,7 @@ def make_plot(filepaths):
             rms_col = get_rms_col(df, filepath)
             rms_col_used = rms_col
             label = os.path.basename(filepath)
-            ax.scatter(df[rms_col], df['score'], s=10, alpha=0.5, linewidths=0,
+            ax.scatter(df[rms_col], df['score'], s=30, alpha=0.5, linewidths=0,
                        color=colors[i % len(colors)], label=label)
 
         ax.set_xlabel(rms_col_used)
