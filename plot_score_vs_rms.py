@@ -1,79 +1,92 @@
 #!/usr/bin/env python3
+"""Plot score vs. rms_fill (or rms) from Rosetta .out files."""
 
-import pandas as pd
-import matplotlib.pyplot as plt
 import sys
 import os
-import shutil
+import subprocess
+import pandas as pd
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 
-def extract_scores(file_name):
-    # Read the file and filter lines for "SCORE"
-    with open(file_name, 'r') as file:
-        lines = [line for line in file if "SCORE" in line]
 
-    if not lines:
-        print(f"No SCORE lines found in {file_name}.")
-        return None
+def parse_out_file(filepath):
+    header = None
+    rows = []
+    with open(filepath) as f:
+        for line in f:
+            if not line.startswith('SCORE:'):
+                continue
+            fields = line.split()
+            if fields[1] == 'score':  # header row
+                header = fields[1:]
+            else:
+                rows.append(fields[1:])
+    if header is None or not rows:
+        raise ValueError(f"No SCORE lines found in {filepath}")
+    min_len = min(len(header), min(len(r) for r in rows))
+    df = pd.DataFrame([r[:min_len] for r in rows], columns=header[:min_len])
+    for col in df.columns:
+        df[col] = pd.to_numeric(df[col], errors='coerce').fillna(df[col])
+    return df
 
-    # Create a DataFrame from the SCORE lines
-    data = [line.split() for line in lines]
-    df = pd.DataFrame(data)
 
-    # Assume header is in the first line
-    header = df.iloc[0]
-    df.columns = header
-    df = df[1:]  # Skip the header row
+def get_rms_col(df, filepath):
+    if 'rms_fill' in df.columns:
+        return 'rms_fill'
+    if 'rms' in df.columns:
+        return 'rms'
+    raise ValueError(f"Neither 'rms_fill' nor 'rms' found in {filepath}. Columns: {list(df.columns)}")
 
-    # Convert relevant columns to numeric
-    df['score'] = pd.to_numeric(df['score'], errors='coerce')
-    df['rms'] = pd.to_numeric(df['rms'], errors='coerce')
 
-    # Drop any rows with NaN values in 'score' or 'rms'
-    df = df.dropna(subset=['score', 'rms'])
+def make_plot(filepaths):
+    colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
-    return df[['score', 'rms']]
+    if len(filepaths) == 1:
+        # Single file: save PNG next to the .out file
+        filepath = filepaths[0]
+        df = parse_out_file(filepath)
+        rms_col = get_rms_col(df, filepath)
+        title = os.path.basename(filepath)
+        out_png = os.path.splitext(filepath)[0] + '.png'
 
-def plot_scores(file_names):
-    colors = ['black', 'red']
-    plt.figure(figsize=(8, 6))
+        fig, ax = plt.subplots(figsize=(8, 6))
+        ax.scatter(df[rms_col], df['score'], s=10, alpha=0.5, linewidths=0,
+                   color=colors[0])
+        ax.set_xlabel(rms_col)
+        ax.set_ylabel('score')
+        ax.set_title(title)
+    else:
+        # Multiple files: overlay on one plot, save in the directory of the first file
+        fig, ax = plt.subplots(figsize=(9, 6))
+        rms_col_used = None
+        for i, filepath in enumerate(filepaths):
+            df = parse_out_file(filepath)
+            rms_col = get_rms_col(df, filepath)
+            rms_col_used = rms_col
+            label = os.path.basename(filepath)
+            ax.scatter(df[rms_col], df['score'], s=10, alpha=0.5, linewidths=0,
+                       color=colors[i % len(colors)], label=label)
 
-    all_scores = []
+        ax.set_xlabel(rms_col_used)
+        ax.set_ylabel('score')
+        ax.set_title('Score vs. RMS')
+        ax.legend(fontsize=8, markerscale=2)
 
-    for i, file_name in enumerate(file_names):
-        scores_df = extract_scores(file_name)
-        if scores_df is not None:
-            plt.scatter(scores_df['rms'], scores_df['score'], color=colors[i], label=os.path.splitext(os.path.basename(file_name))[0])
-            all_scores.append(scores_df['score'])
+        first_dir = os.path.dirname(os.path.abspath(filepaths[0]))
+        out_png = os.path.join(first_dir, 'score_rms_combined.png')
 
-    # Combine all scores for y-axis limits
-    if all_scores:
-        combined_scores = pd.concat(all_scores)
-        y_min = combined_scores.min() - 10
-        y_max = combined_scores.quantile(0.9) + 50
-
-        # Set y-limits
-        plt.ylim(y_min, y_max)
-
-    plt.title('Score vs RMS Scatterplot')
-    plt.xlabel('RMS')
-    plt.ylabel('Score')
-    plt.legend()
-    plt.grid()
     plt.tight_layout()
+    fig.savefig(out_png, dpi=300)
+    plt.close(fig)
+    print(f"Saved: {out_png}")
 
-    # Save the figure
-    output_file = 'score_vs_rms_plot.png'
-    plt.savefig(output_file, dpi=300)
-    print(f'Saved plot to {output_file}')
-    plt.close()
+    if subprocess.run(['which', 'open'], capture_output=True).returncode == 0:
+        subprocess.run(['open', out_png])
 
-    if shutil.which('open'): os.system(f'open {output_file}')
 
-if __name__ == "__main__":
-    if len(sys.argv) < 2 or len(sys.argv) > 3:
-        print("Usage: python script.py <scorefile1> [<scorefile2>]")
+if __name__ == '__main__':
+    if len(sys.argv) < 2:
+        print(f"Usage: {sys.argv[0]} file1.out [file2.out ...]")
         sys.exit(1)
-
-    score_files = sys.argv[1:3]
-    plot_scores(score_files)
-
+    make_plot(sys.argv[1:])
