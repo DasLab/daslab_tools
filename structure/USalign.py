@@ -55,22 +55,34 @@ def expand_patterns(patterns):
             uniq.append(x)
     return uniq
 
-def parse_usalign_output(lines):
-    """Parse USalign stdout lines for TM-score, aligned length and RMSD."""
+def parse_usalign_output(lines, use_d=False):
+    """Parse USalign stdout lines for TM-score, aligned length and RMSD.
+
+    When use_d=True, reports the TM-score scaled by user-specified d0 instead
+    of the standard Structure_2-normalized score.
+    """
     TMscore = 0.0
     nalign = 0
     rmsd_align = 0.0
     for line in lines:
-        # TM-score line: look for a numeric value on a TM-score line
-        if 'Structure_2' in line and line.strip().lower().startswith('tm'):
-            m = re.search(r'([0-9]*\.[0-9]+|\d+)', line)
-            if m:
-                try:
-                    TMscore = float(m.group(1))
-                except ValueError:
-                    pass
+        stripped = line.strip()
+        if stripped.lower().startswith('tm'):
+            if use_d and 'user-specified d0' in line:
+                m = re.search(r'([0-9]*\.[0-9]+|\d+)', line)
+                if m:
+                    try:
+                        TMscore = float(m.group(1))
+                    except ValueError:
+                        pass
+            elif not use_d and 'Structure_2' in line:
+                m = re.search(r'([0-9]*\.[0-9]+|\d+)', line)
+                if m:
+                    try:
+                        TMscore = float(m.group(1))
+                    except ValueError:
+                        pass
         # Aligned length line: extract numbers (aligned length, RMSD)
-        if line.strip().startswith('Aligned length'):
+        if stripped.startswith('Aligned length'):
             cleaned = line.replace(',', '')
             nums = re.findall(r'\d+(?:\.\d+)?', cleaned)
             if len(nums) >= 1:
@@ -104,6 +116,7 @@ def main():
     parser.add_argument('-force_monomer', action='store_true', help='force align monomer (default auto-detect)')
     parser.add_argument('-mm', default=-1, type=int, help='force specific -mm in USalign')
     parser.add_argument('-atom', default="C3'", help='atom representative, up to 4 characters (default: "C3\'") ')
+    parser.add_argument('-d', type=float, default=None, help='assign distance parameter d0 for TM-score')
     parser.add_argument('-t', '--tabular', action='store_true', help='output in csv format')
     parser.add_argument('--hetatm', action='store_true', help='Use heteroatom residues in alignment')
     parser.add_argument('-ter', type=int, default=0, help='USalign mode to handle TER in multichain mode')
@@ -190,6 +203,8 @@ def main():
                 cmd.extend(['-mm', '1', '-ter', str(args.ter)])  # legacy
             if args.mm > -1:
                 cmd.extend(['-mm', str(args.mm), '-ter', str(args.ter)])
+            if args.d is not None:
+                cmd.extend(['-d', str(args.d)])
             if args.hetatm:
                 cmd.extend(['-het', '1'])
             if args.dump:
@@ -221,7 +236,7 @@ def main():
                 for line in stdout_lines:
                     print(line.strip())
 
-            TMscore, nalign, rmsd_align = parse_usalign_output(stdout_lines)
+            TMscore, nalign, rmsd_align = parse_usalign_output(stdout_lines, use_d=args.d is not None)
 
             if args.tabular:
                 print('%s,%s,%f' % (refpdb, pdb_path, TMscore))
