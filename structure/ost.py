@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from sys import argv,stdout,stderr
-import shutil
+import shutil, json
 from os import system,remove,path,makedirs,rmdir
 from glob import glob
 import argparse
@@ -26,6 +26,10 @@ makedirs( tmpdir, exist_ok = True )
 
 ref_tmp = tmpdir + path.basename(args.refpdb)
 shutil.copyfile( args.refpdb, ref_tmp)
+def fmt(filepath):
+    return 'mmcif' if filepath.endswith(('.cif', '.mmcif')) else 'pdb'
+
+ref_fmt = fmt(args.refpdb)
 print( '%s,%s,%s,%s,%s,%s' % ( 'lddt', 'tm_score', 'ilddt', 'ics', 'ips', 'model' ) )
 for infile in args.pdb:
     if not path.exists( infile ):
@@ -34,34 +38,29 @@ for infile in args.pdb:
     infile_tmp =  tmpdir + path.basename(infile)
     shutil.copyfile( infile, infile_tmp)
     outfile_tmp = tmpdir + 'out.json'
+    model_fmt = fmt(infile)
     if shutil.which('docker'):
-        command = 'docker run --platform linux/amd64 --rm -v /tmp:/mnt registry.scicore.unibas.ch/schwede/openstructure:latest compare-structures -r %s  -m %s  -ft -mf pdb --lddt --ilddt --tm-score --ips --ics -o %s -v 0' % \
-                  ( ref_tmp.replace('/tmp/','/mnt/'), infile_tmp.replace('/tmp/','/mnt/'), outfile_tmp.replace('/tmp/','/mnt/') )
+        command = 'docker run --platform linux/amd64 --rm -v /tmp:/mnt registry.scicore.unibas.ch/schwede/openstructure:latest compare-structures -r %s  -m %s  -ft -rf %s -mf %s --lddt --ilddt --tm-score --ips --ics -o %s -v 0' % \
+                  ( ref_tmp.replace('/tmp/','/mnt/'), infile_tmp.replace('/tmp/','/mnt/'), ref_fmt, model_fmt, outfile_tmp.replace('/tmp/','/mnt/') )
     else:
-        command = 'singularity run --app OST /home/groups/rhiju/rkretsch/openstructure/singularity/ost.img  compare-structures -r %s  -m %s  -mf pdb --lddt --ilddt  --tm-score --ips --ics -o %s -v 0' % \
-                  ( ref_tmp,infile_tmp,outfile_tmp )
+        command = 'singularity run --app OST /home/groups/rhiju/rkretsch/openstructure/singularity/ost.img  compare-structures -r %s  -m %s  -rf %s -mf %s --lddt --ilddt  --tm-score --ips --ics -o %s -v 0' % \
+                  ( ref_tmp,infile_tmp,ref_fmt,model_fmt,outfile_tmp )
     if args.rna: command += ' -rna'
     if args.lddt_no_checks: command += ' --lddt-no-stereochecks'
     errcode = system(command)
     lddt = 0
     tm_score = 0
-    ilddt = 0
+    ilddt = float('nan')
     ics = 0
     ips = 0
     if not errcode:
         assert( path.isfile(outfile_tmp) )
-        lines = open(outfile_tmp).readlines()
-        for line in lines:
-            pos = line.find('"lddt":')
-            if (pos>-1): lddt = float( line[pos+8:].strip().replace(',','') )
-            pos = line.find('"ilddt":')
-            if (pos>-1): ilddt = float( line[pos+9:].strip().replace(',','').replace('null','nan') )
-            pos = line.find('"tm_score":')
-            if (pos>-1): tm_score = float( line[pos+11:].strip().replace(',','') )
-            pos = line.find('"ics":')
-            if (pos>-1): ics = float( line[pos+7:].strip().replace(',','').replace('null','nan') )
-            pos = line.find('"ips":')
-            if (pos>-1): ips = float( line[pos+7:].strip().replace(',','').replace('null','nan') )
+        result = json.load(open(outfile_tmp))
+        lddt     = result.get('lddt', 0) or 0
+        tm_score = result.get('tm_score', 0) or 0
+        ilddt    = result.get('ilddt') or float('nan')
+        ics      = result.get('ics', 0) or 0
+        ips      = result.get('ips', 0) or 0
     print( '%f,%f,%f,%f,%f,%s' % ( lddt, tm_score, ilddt, ics, ips, infile ) )
     if path.isfile(outfile_tmp): remove( outfile_tmp )
     remove( infile_tmp )
