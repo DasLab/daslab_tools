@@ -36,6 +36,7 @@ parser.add_argument('refpdb', help='Reference PDB file')
 parser.add_argument('pdb', type=str, nargs='+', help='PDB file to align')
 parser.add_argument('--rna', action='store_true',  help='force residue number alignment')
 parser.add_argument('--lddt_no_checks', action='store_true',  help='turn off stereochemical check in lddt')
+parser.add_argument('-v', '--verbose', action='store_true', help='print docker/singularity command before running')
 
 args = parser.parse_args()
 if not path.exists( args.refpdb ):
@@ -70,7 +71,7 @@ for infile in args.pdb:
                   ( ref_tmp,infile_tmp,ref_fmt,model_fmt,outfile_tmp )
     if args.rna: command += ' -rna'
     if args.lddt_no_checks: command += ' --lddt-no-stereochecks'
-    print('Running: ' + command, file=stderr)
+    if args.verbose: print('Running: ' + command, file=stderr)
     errcode = system(command)
     lddt = 0
     tm_score = 0
