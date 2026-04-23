@@ -4,8 +4,31 @@ import shutil, json
 from os import system,remove,path,makedirs,rmdir
 from glob import glob
 import argparse
+import platform
+import subprocess
+import sys
+import time
+
+def ensure_docker_running():
+    """On macOS, start Docker Desktop if the daemon isn't responding."""
+    if subprocess.run(['docker', 'info'], capture_output=True).returncode == 0:
+        return
+    if platform.system() != 'Darwin':
+        print('Docker is installed but not running. Please start it.', file=sys.stderr)
+        sys.exit(1)
+    print('Docker daemon not running — starting Docker Desktop...', file=sys.stderr)
+    subprocess.run(['open', '-a', 'Docker'])
+    for _ in range(30):
+        time.sleep(2)
+        if subprocess.run(['docker', 'info'], capture_output=True).returncode == 0:
+            print('Docker is ready.', file=sys.stderr)
+            return
+    print('Timed out waiting for Docker to start.', file=sys.stderr)
+    sys.exit(1)
+
 # currently have docker set up on Mac, and singularity set up on Sherlock
 if not shutil.which( 'docker' ): assert(shutil.which('singularity'))
+if shutil.which('docker'): ensure_docker_running()
 
 parser = argparse.ArgumentParser(description='Run USalign on a bunch of PDBs.')
 
@@ -47,12 +70,15 @@ for infile in args.pdb:
                   ( ref_tmp,infile_tmp,ref_fmt,model_fmt,outfile_tmp )
     if args.rna: command += ' -rna'
     if args.lddt_no_checks: command += ' --lddt-no-stereochecks'
+    print('Running: ' + command, file=stderr)
     errcode = system(command)
     lddt = 0
     tm_score = 0
     ilddt = float('nan')
     ics = 0
     ips = 0
+    if errcode:
+        print('ERROR: docker/singularity command failed with exit code %d' % errcode, file=stderr)
     if not errcode:
         assert( path.isfile(outfile_tmp) )
         result = json.load(open(outfile_tmp))
