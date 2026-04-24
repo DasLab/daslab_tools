@@ -58,10 +58,59 @@ def strip_nonrna(structure):
             model.detach_child(cid)
 
 
+def _patch_cif_missing_atom_fields(filepath: Path) -> Path:
+    """Return a path to a (possibly patched) CIF with B_iso_or_equiv and occupancy.
+
+    Some Protenix CIF outputs omit these columns; BioPython's MMCIFParser requires
+    them.  When absent, we inject dummy columns (value 1.00) into the _atom_site
+    loop before parsing.  A temp file is written only when patching is needed;
+    otherwise the original path is returned unchanged.
+    """
+    NEEDED = ('_atom_site.B_iso_or_equiv', '_atom_site.occupancy')
+    text = filepath.read_text(errors='replace')
+    missing = [f for f in NEEDED if f not in text]
+    if not missing:
+        return filepath
+
+    lines = text.splitlines(keepends=True)
+    out = []
+    in_atom_header = False
+    in_atom_data = False
+
+    for line in lines:
+        s = line.strip()
+        if s == 'loop_':
+            in_atom_header = False
+            in_atom_data = False
+        if s.startswith('_atom_site.'):
+            in_atom_header = True
+            in_atom_data = False
+        elif in_atom_header and s and not s.startswith('#'):
+            # First non-field line after the header → inject missing field names
+            for f in missing:
+                out.append(f + '\n')
+            in_atom_header = False
+            in_atom_data = True
+
+        if in_atom_data and s and not s.startswith('_') and s not in ('#', 'loop_'):
+            out.append(line.rstrip('\n') + (' 1.00' * len(missing)) + '\n')
+        else:
+            out.append(line)
+
+    tmp = Path(tempfile.mktemp(suffix='.cif'))
+    tmp.write_text(''.join(out))
+    return tmp
+
+
 def load_structure(filepath: Path):
     ext = filepath.suffix.lower()
     if ext in ('.cif', '.mmcif'):
-        return MMCIFParser(QUIET=True).get_structure(filepath.stem, str(filepath)), True
+        patched = _patch_cif_missing_atom_fields(filepath)
+        try:
+            return MMCIFParser(QUIET=True).get_structure(filepath.stem, str(patched)), True
+        finally:
+            if patched != filepath:
+                patched.unlink(missing_ok=True)
     return PDBParser(QUIET=True).get_structure(filepath.stem, str(filepath)), False
 
 
