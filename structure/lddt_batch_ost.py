@@ -23,6 +23,8 @@ def load_struct(p, fmt):
     return scoring_base.PDBPrep(p, fault_tolerant=True)
 
 
+no_stereocheck = '--lddt-no-stereochecks' in sys.argv
+
 with open(sys.argv[1]) as fh:
     rows = [ln.strip().split('\t') for ln in fh if ln.strip()]
 
@@ -30,7 +32,7 @@ for ref_path, ref_fmt, mdl_path, mdl_fmt in rows:
     try:
         ref = load_struct(ref_path, ref_fmt)
         mdl = load_struct(mdl_path, mdl_fmt)
-        sc = scoring.Scorer(mdl, ref)
+        sc = scoring.Scorer(mdl, ref, lddt_no_stereochecks=no_stereocheck)
         lddt_v = sc.lddt if sc.lddt is not None else math.nan
         ilddt_v = sc.ilddt if sc.ilddt is not None else math.nan
     except Exception:

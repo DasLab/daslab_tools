@@ -34,8 +34,9 @@ def ensure_docker_running():
 if not shutil.which('docker'): assert(shutil.which('singularity'))
 if shutil.which('docker'): ensure_docker_running()
 args = argv[1:]
-verbose = '-v' in args or '--verbose' in args
-files = [a for a in args if a not in ('-v', '--verbose')]
+verbose      = '-v' in args or '--verbose' in args
+no_stereocheck = '--lddt_no_check' in args or '-nc' in args
+files = [a for a in args if a not in ('-v', '--verbose', '--lddt_no_check', '-nc')]
 
 if len(files) < 2:
     print(argv[0] + " [-v/--verbose] [ref] [model files]")
@@ -72,6 +73,8 @@ if shutil.which('docker'):
     command = ['docker', 'run', '--platform', 'linux/amd64', '--rm',
                '-v', '/tmp:/mnt', OST_IMAGE,
                '-v', '0', '/mnt/lddt_batch_ost.py', '/mnt/lddt_manifest.tsv']
+    if no_stereocheck:
+        command.append('--lddt-no-stereochecks')
     if verbose:
         print('Running: ' + ' '.join(command), file=stderr)
 
@@ -114,6 +117,7 @@ else:
         model_fmt = fmt(infile)
         command = 'singularity run --app OST /home/groups/rhiju/rkretsch/openstructure/singularity/ost.img  compare-structures -r %s  -m %s  -rf %s -mf %s --lddt --ilddt -o %s -v 0' % \
                   (ref_tmp, infile_tmp, ref_fmt, model_fmt, outfile_tmp)
+        if no_stereocheck: command += ' --lddt-no-stereochecks'
         if verbose: print('Running: ' + command, file=stderr)
         errcode = system(command)
         lddt = -1
