@@ -1,12 +1,22 @@
-#!/usr/bin/env python
-import sys
-import string
-from os import system,popen,getcwd,chdir,listdir
-from os.path import basename,abspath, dirname,exists,join,isdir
+#!/usr/bin/env python3
+import argparse
+import subprocess
+from os import system, getcwd, chdir, listdir
+from os.path import basename, abspath, dirname, exists, join, isdir
 from glob import glob
 
-outfiles = sys.argv[1:]
-scripts_path = dirname( abspath( sys.argv[0] ) )
+parser = argparse.ArgumentParser(
+    description='Collect and merge Rosetta silent files from job output directories into per-tag .out files.'
+)
+parser.add_argument('outfiles', nargs='+',
+                    help='output directories or .out files to merge')
+if len(__import__('sys').argv) == 1:
+    parser.print_help()
+    __import__('sys').exit(1)
+args = parser.parse_args()
+
+outfiles = args.outfiles
+scripts_path = dirname( abspath( __file__ ) )
 
 which_files_to_cat = {}
 
@@ -33,17 +43,15 @@ for outfile in outfiles:
 
         globfiles = glob( outfile+'/*/*out' )
 
-        #print globfiles
         if len( globfiles ) == 0: globfiles = glob( outfile + '/*out'  )
-        #print globfiles
 
         # Remove any "checkpoint" files from stepwise checkpointing
-        globfiles = filter( lambda x: "S_" not in x and "_checkpoint" not in x, globfiles )
+        globfiles = [x for x in globfiles if "S_" not in x and "_checkpoint" not in x]
 
         # make sure to order 0,1,2,... 10, 11, 12, ... 100, 101, ...
-        globfiles_with_length = list(map( lambda x: [len(x),x], globfiles ))
+        globfiles_with_length = [[len(x), x] for x in globfiles]
         globfiles_with_length.sort()
-        globfiles = list(map( lambda x:x[-1], globfiles_with_length ))
+        globfiles = [x[-1] for x in globfiles_with_length]
 
         for file in globfiles:
             tag = basename( file ).replace('.out','')
@@ -53,31 +61,24 @@ for outfile in outfiles:
 
 
 for tag in which_files_to_cat.keys():
-    #if (len( which_files_to_cat[tag] ) == 1) : continue
-
     cat_file = tag+".out"
-    print("Catting into: ",cat_file, end='')
-    command = 'python %s/cat_outfiles.py %s >  %s ' % \
-              (scripts_path, " ".join( which_files_to_cat[tag] ) ,
+    print("Catting into: ", cat_file, end='')
+    command = 'python3 %s/cat_outfiles.py %s >  %s ' % \
+              (scripts_path, " ".join( which_files_to_cat[tag] ),
                cat_file )
     system( command )
 
     cat_file_contributors = cat_file + '.txt'
     fid_txt = open( cat_file_contributors, 'w' )
     for m in range( len( which_files_to_cat[tag] ) ):
-        fid_txt.write( '%03d %s\n' % (m,which_files_to_cat[tag][m]) )
+        fid_txt.write( '%03d %s\n' % (m, which_files_to_cat[tag][m]) )
     fid_txt.close()
 
-    lines = popen( 'grep SCORE '+cat_file).readlines()
-    print('... from %d primary files. Found %d  decoys.' % (len( which_files_to_cat[tag] ),len(lines)-1))
+    lines = subprocess.run(['grep', 'SCORE', cat_file],
+                           capture_output=True, text=True).stdout.splitlines(keepends=True)
+    print('... from %d primary files. Found %d  decoys.' % (len( which_files_to_cat[tag] ), len(lines)-1))
 
-    fid_sc = open( cat_file.replace('.out','.sc'),'w' )
+    fid_sc = open( cat_file.replace('.out','.sc'), 'w' )
     for line in lines:
         fid_sc.write( line )
     fid_sc.close()
-
-for outfile in outfiles:
-    command = 'rm -rf '+outfile
-    #print command
-    #system( command )
-
