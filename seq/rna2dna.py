@@ -37,11 +37,12 @@ def is_fasta_file(filename):
     return any(filename.endswith(ext) for ext in fasta_extensions)
 
 def main():
-    if len(sys.argv) < 2:
-        print("Usage: python rna2dna.py <string_or_file> [string_or_file ...]")
-        sys.exit(1)
+    import argparse
+    parser = argparse.ArgumentParser(description='Convert RNA sequences or FASTA files to DNA (U→T).')
+    parser.add_argument('inputs', nargs='+', help='RNA sequence string(s) or FASTA file(s)')
+    args = parser.parse_args()
 
-    for arg in sys.argv[1:]:
+    for arg in args.inputs:
         if is_fasta_file(arg):
             # Process as FASTA file
             output_file = get_output_filename(arg)
