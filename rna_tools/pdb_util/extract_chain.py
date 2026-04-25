@@ -1,33 +1,28 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
-from sys import stdout,argv
-from os import system
-import string
+import argparse
+import gzip
 
 def extractchain(actualpdbname, out, chains_to_extract):
-
-    if actualpdbname[-3:] =='.gz':
-        lines = popen( 'zcat '+actualpdbname).readlines()
+    if actualpdbname.endswith('.gz'):
+        with gzip.open(actualpdbname, 'rt') as f:
+            lines = f.readlines()
     else:
-        lines = open(actualpdbname,'r').readlines()
+        lines = open(actualpdbname, 'r').readlines()
 
-#    out = open(actualpdbname_chain_to_extract,'w')
-    for i in range( len(lines)):
-        line = lines[i]
-        if (line.count('ATOM') or (line.count('HETATM'))  )\
-                and (line[21:22] in chains_to_extract ):
-            #line = line[0:21]+chain_to_extract+line[22:]
+    for line in lines:
+        if (line.count('ATOM') or line.count('HETATM')) and (line[21:22] in chains_to_extract):
             out.write(line)
     out.close()
 
-actualpdbname = argv[1]
-chains_to_extract = argv[2:]
+parser = argparse.ArgumentParser(description='Extract chain(s) from a PDB file into a new file.')
+parser.add_argument('pdbfile', help='PDB file to extract from')
+parser.add_argument('chains', nargs='+', help='chain ID(s) to extract')
+args = parser.parse_args()
 
-newpdbfile = actualpdbname.replace('.pdb',''.join(chains_to_extract)+'.pdb')
+newpdbfile = args.pdbfile.replace('.pdb', ''.join(args.chains) + '.pdb')
+out = open(newpdbfile, 'w')
 
-out = open( newpdbfile, 'w' )
+print('Extracting to', newpdbfile, '...')
 
-print( 'Extracting to ',newpdbfile,'...' )
-
-extractchain(actualpdbname, out, chains_to_extract)
-
+extractchain(args.pdbfile, out, args.chains)
