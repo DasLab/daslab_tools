@@ -1,10 +1,14 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+
+import argparse
 from read_pdb import read_pdb
-from sys import argv
-pdb = argv[1]
 
+parser = argparse.ArgumentParser(description='Reorder atoms in an RNA PDB file to standard atom order, writing to stdout.')
+parser.add_argument('pdbfile', help='PDB file to reorder')
+args = parser.parse_args()
+
+pdb = args.pdbfile
 ( coords, pdb_lines, sequence, chains, residues, segids ) = read_pdb( pdb )
-
 
 atoms = {
         "  A":[" P  "," OP1"," OP2"," O5'"," C5'"," C4'"," O4'"," C3'"," O3'"," C2'"," O2'"," C1'"," N9 "," C8 "," N7 "," C5 "," C6 "," N6 "," N1 "," C2 "," N3 "," C4 "],
