@@ -24,6 +24,10 @@ parser = argparse.ArgumentParser(
 parser.add_argument('cluster', help='cluster name (e.g. sherlock, oak)')
 parser.add_argument('files_and_flags', nargs=argparse.REMAINDER,
                     help='files/dirs to sync and/or rsync flags (e.g. --exclude --delete)')
+if len(sys.argv) == 1:
+    parser.print_help()
+    print('\nRun  cluster_info.py  to see available destinations.')
+    sys.exit(1)
 args = parser.parse_args()
 
 (cluster, remotedir) = cluster_check(args.cluster)
