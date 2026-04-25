@@ -1,33 +1,41 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
-from sys import stdout,argv
+import argparse
+from sys import stdout
 
 def stripchain(actualpdbname, out, startchain, newchain, chainspecified):
     lines = open(actualpdbname,'r').readlines()
-#    out = open(actualpdbname_newchain,'w')
-    for i in range( len(lines)):
-        line = lines[i]
-        if (line.count('ATOM') or line.count( 'HETATM')) and (line[21:22] == startchain or not chainspecified):
+    for line in lines:
+        if (line.count('ATOM') or line.count('HETATM')) and (line[21:22] == startchain or not chainspecified):
             line = line[0:21]+newchain+line[22:]
-            out.write(line)
+        out.write(line)
     out.close()
 
 
-actualpdbname = argv[1]
-#actualpdbname_newchain = stdout
-out = stdout
-newchain = argv[-1]
-chainspecified = 0
-startchain = '_'
-if len(argv)>3:
-    startchain = argv[2]
-    if len(startchain) == 1:
-        chainspecified = 1
+parser = argparse.ArgumentParser(
+    description='Replace chain ID in a PDB file, writing result to stdout.',
+    epilog='With one chain argument: replace all chains.\nWith two: replace startchain with newchain.',
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+)
+parser.add_argument('pdbfile', help='PDB file to process')
+parser.add_argument('chains', nargs='+', metavar='chain',
+                    help='newchain, or startchain newchain')
+args = parser.parse_args()
 
-if startchain == '-' or startchain =='_':
+if len(args.chains) == 1:
     startchain = ' '
+    newchain = args.chains[0]
+    chainspecified = 0
+elif len(args.chains) == 2:
+    startchain = args.chains[0]
+    newchain = args.chains[1]
+    chainspecified = 1
+else:
+    parser.error('expected 1 or 2 chain arguments')
 
-if newchain == '-' or newchain =='_':
+if startchain == '-' or startchain == '_':
+    startchain = ' '
+if newchain == '-' or newchain == '_':
     newchain = ' '
 
-stripchain(actualpdbname, out, startchain, newchain, chainspecified)
+stripchain(args.pdbfile, stdout, startchain, newchain, chainspecified)
