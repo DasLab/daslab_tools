@@ -5,8 +5,19 @@ import argparse
 import subprocess
 import sys
 
+def _alias_hint(alias_name, full_command):
+    if '-h' not in sys.argv and '--help' not in sys.argv:
+        return ''
+    ok = subprocess.run(['/bin/bash', '-i', '-c', 'alias ' + alias_name],
+                        capture_output=True).returncode == 0
+    return ('Alias active: use  %s  instead of the full script name.' % alias_name
+            if ok else
+            'Tip: add to ~/.bashrc:\n  alias %s="%s"' % (alias_name, full_command))
+
 parser = argparse.ArgumentParser(
     description='Show which column numbers correspond to which score terms in a Rosetta silent or score file.',
+    epilog=_alias_hint('fp', 'fields.py'),
+    formatter_class=argparse.RawDescriptionHelpFormatter,
 )
 parser.add_argument('scorefile', help='Rosetta silent file or score file')
 args = parser.parse_args()
