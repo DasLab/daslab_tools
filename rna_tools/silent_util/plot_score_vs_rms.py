@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Plot score vs. rms_fill (or rms) from Rosetta .out files."""
 
+import argparse
 import sys
 import os
 import subprocess
@@ -86,7 +87,7 @@ def make_plot(filepaths):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) < 2:
-        print(f"Usage: {sys.argv[0]} file1.out [file2.out ...]")
-        sys.exit(1)
-    make_plot(sys.argv[1:])
+    parser = argparse.ArgumentParser(description='Plot score vs. RMS from Rosetta .out files.')
+    parser.add_argument('outfiles', nargs='+', metavar='file.out', help='Rosetta score/silent file(s)')
+    args = parser.parse_args()
+    make_plot(args.outfiles)
