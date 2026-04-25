@@ -92,6 +92,11 @@ def strip_home_dirname(clusterdir):
 
 
 if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser(description='List available cluster/destination names.')
+    parser.add_argument('-a', '--all', action='store_true', help='show resolved host and path for each destination')
+    args = parser.parse_args()
+
     entries = [
         ('local',                  []),
         ('dropbox',                []),
@@ -106,10 +111,16 @@ if __name__ == '__main__':
     ]
 
     print('Available destinations:\n')
-    print(f'  {"name":<26}  {"aliases":<18}  host / path')
-    print('  ' + '-' * 74)
+    if args.all:
+        print(f'  {"name":<26}  {"aliases":<18}  host / path')
+        print('  ' + '-' * 74)
     for name, aliases in entries:
-        cluster, cluster_dir = cluster_check(name)
-        host = '(local)' if cluster == '' else cluster
-        alias_str = ', '.join(aliases) if aliases else ''
-        print(f'  {name:<26}  {alias_str:<18}  {host}  {cluster_dir}')
+        alias_str = ' (' + ', '.join(aliases) + ')' if aliases else ''
+        if args.all:
+            cluster, cluster_dir = cluster_check(name)
+            host = '(local)' if cluster == '' else cluster
+            print(f'  {name:<26}  {", ".join(aliases):<18}  {host}  {cluster_dir}')
+        else:
+            print(f'  {name}{alias_str}')
+    if not args.all:
+        print('\n  (run with -a/--all to see resolved host and path for each)')
