@@ -10,7 +10,7 @@ parser = argparse.ArgumentParser(
     description='Extract sequence(s) from PDB file(s) in FASTA format.',
 )
 parser.add_argument('pdbfiles', nargs='+', help='PDB file(s) to extract sequence from')
-parser.add_argument('--nochain', action='store_true',
+parser.add_argument('-nochain', action='store_true',
                     help='omit chain identifiers from FASTA headers')
 args = parser.parse_args()
 
