@@ -1,6 +1,10 @@
+#!/usr/bin/env python3
 import random
 import subprocess
-import pp
+try:
+    import pp
+except ImportError:
+    pp = None
 from os.path import abspath
 import os
 import time
@@ -33,7 +37,7 @@ def parse_nodefile(inp):
                 else:
                     start_id = int(i.split('-')[0])
                     end_id = int(i.split('-')[1])
-                    for j in xrange(start_id, end_id+1):
+                    for j in range(start_id, end_id+1):
                         node_list.append(initial + '%03d' % j)
             inp = inp[(end_brc+1):]
     return node_list
@@ -112,3 +116,13 @@ def submit_cmdline(work_dir, cmdline):
         returncode = err.returncode
     os.chdir(cwd)
     return output, returncode
+
+
+if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser(
+        description='Legacy helper for the parallel-python (pp) cluster submission system. '
+                    'Not intended to be run directly — import its functions from other scripts.'
+    )
+    parser.parse_args()
+    print('pp_util.py is a legacy helper module (parallel-python/pp). Import, do not run directly.')

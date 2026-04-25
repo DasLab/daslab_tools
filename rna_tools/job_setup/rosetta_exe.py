@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from os.path import exists, join
 import os
 from itertools import product
@@ -53,3 +54,20 @@ def rosetta_exe(exe_file, rosetta_folder = None, extension = None) :
 def check_path_exist(path_name) :
     if not exists(path_name) :
         raise ValueError("Path %s does not exist!" % path_name)
+
+
+if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser(
+        description='Locate Rosetta executables. When run directly, finds and prints the path to a Rosetta binary.'
+    )
+    parser.add_argument('exe', nargs='?', default='rosetta_scripts',
+                        help='executable name without extension (default: rosetta_scripts)')
+    parser.add_argument('-rosetta_folder', metavar='DIR', default=None,
+                        help='path to Rosetta installation (default: $ROSETTA)')
+    args = parser.parse_args()
+    try:
+        path = rosetta_exe(args.exe, rosetta_folder=args.rosetta_folder)
+        print(path)
+    except (ValueError, KeyError) as e:
+        print('Could not locate %s: %s' % (args.exe, e))

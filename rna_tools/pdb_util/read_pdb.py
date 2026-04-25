@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-# quick and dirty PDB reader
+#!/usr/bin/env python3
 
 def read_pdb( filename ):
 
@@ -51,3 +50,16 @@ def read_pdb( filename ):
             old_segid  = segid
 
     return ( coords, pdb_lines, sequence, chains, residues, segids )
+
+
+if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser(
+        description='PDB reader helper. When run directly, reports residue count per chain.'
+    )
+    parser.add_argument('pdbfiles', nargs='+', help='PDB files to inspect')
+    args = parser.parse_args()
+    for pdbfile in args.pdbfiles:
+        coords, pdb_lines, sequence, chains, residues, segids = read_pdb(pdbfile)
+        unique_chains = list(dict.fromkeys(chains))
+        print('%s: %d residues, chains: %s' % (pdbfile, len(residues), ' '.join(unique_chains)))

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 def make_tag( int_vector ):
     tag = ''
@@ -89,5 +89,16 @@ def make_tag_from_int_range( int_range ):
     else:
         first_idx = int(int_range)
         last_idx = int(int_range)
-    int_vector = [ x for x in xrange(first_idx, last_idx+1) ]
+    int_vector = [ x for x in range(first_idx, last_idx+1) ]
     return make_tag( int_vector )
+
+
+if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser(
+        description='Rosetta residue tag formatter. Formats a list of residue numbers as a Rosetta tag string.'
+    )
+    parser.add_argument('numbers', nargs='+', type=int, metavar='N',
+                        help='residue numbers')
+    args = parser.parse_args()
+    print(make_tag(args.numbers))
