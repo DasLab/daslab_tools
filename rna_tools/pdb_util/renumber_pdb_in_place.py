@@ -1,8 +1,7 @@
-#!/usr/bin/env python
-from __future__ import print_function
-from sys import argv
+#!/usr/bin/env python3
+import argparse
 from os import system
-from parse_options import parse_options, get_resnum_chain
+from parse_options import get_resnum_chain
 
 def renumber_pdb(pdbnames, new_numbers, chains = [], segids = [], retain_atom_num = 0):
 
@@ -69,16 +68,26 @@ def renumber_pdb(pdbnames, new_numbers, chains = [], segids = [], retain_atom_nu
         system( 'mv temp.txt '+pdbname )
 
 if __name__ == '__main__':
-    retain_atom_num = parse_options( argv, "retain_atom_num", 0 )
+    parser = argparse.ArgumentParser(
+        description='Renumber residues in PDB file(s) in place.',
+        epilog='Residue tags may include ranges and chain prefixes, e.g.: 1-5 A:7-9 -3--1\n'
+               'Optional flags (e.g. --retain-atom-num) must come before the pdbfile.',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument('--retain-atom-num', action='store_true',
+                        help='keep original atom serial numbers')
+    parser.add_argument('pdbfile', help='PDB file to renumber in place')
+    parser.add_argument('res_tags', nargs=argparse.REMAINDER,
+                        help='residue ranges / chain specs (e.g. 1-5 A:7-9 -3--1); '
+                             'extra .pdb filenames here are also renumbered')
+    args = parser.parse_args()
 
-    assert( len(argv)>1)
-
-    # Look for integers... perhaps we are specifying particular residue numbers
-    pdbnames = []
+    pdbnames = [args.pdbfile]
     new_numbers = []
     chains = []
     segids = []
-    for i in range(1, len( argv ) ):
-        if argv[i].find( '.pdb' )>0 or not get_resnum_chain( argv[i], new_numbers, chains, segids ):
-            pdbnames.append( argv[i] )
-    renumber_pdb(pdbnames, new_numbers, chains, segids, retain_atom_num)
+    for tag in args.res_tags:
+        if not get_resnum_chain(tag, new_numbers, chains, segids):
+            pdbnames.append(tag)
+
+    renumber_pdb(pdbnames, new_numbers, chains, segids, args.retain_atom_num)

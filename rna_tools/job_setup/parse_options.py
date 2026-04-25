@@ -136,3 +136,20 @@ def parse_options( argv, tag, default):
 
     return value
 
+
+if __name__ == '__main__':
+    import sys
+    if len(sys.argv) < 2:
+        print('Usage: parse_options.py <res_tag> [<res_tag> ...]')
+        print('Example: parse_options.py A:1-5 B:2-4 -3--1 7-9')
+        sys.exit(0)
+    print(f'{"token":<20}  {"resnums":<30}  {"chains":<10}  segids')
+    print('-' * 72)
+    for token in sys.argv[1:]:
+        resnums, chains, segids = [], [], []
+        ok = get_resnum_chain(token, resnums, chains, segids)
+        if ok:
+            print(f'{token:<20}  {str(resnums):<30}  {str(chains):<10}  {segids}')
+        else:
+            print(f'{token:<20}  (not a residue spec)')
+
