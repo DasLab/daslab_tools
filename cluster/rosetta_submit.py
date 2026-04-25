@@ -1,35 +1,41 @@
-#!/usr/bin/env python
-from __future__ import print_function
-from sys import argv,exit
-from os import system,getcwd,popen,devnull
+#!/usr/bin/env python3
+import argparse
+import subprocess
+from sys import exit
+from os import system,getcwd,devnull
 from os.path import basename,dirname,expanduser,exists,expandvars
-import string
 
-def Help():
-    print( argv[0]+' <text file with rosetta command> <outdir> <# jobs>  [# hours]' )
-    print( '  give outdir as 0 and # jobs as 1 to not create separate outdirs.' )
-    exit()
+parser = argparse.ArgumentParser(
+    description='Generate cluster submission scripts for Rosetta jobs (qsub/sbatch/condor).',
+    epilog='Give outdir as 0 and n_jobs as 1 to run without separate per-job output directories.',
+)
+parser.add_argument('infile',      help='text file with Rosetta command(s)')
+parser.add_argument('outdir',      help='output directory base, or 0 to keep jobs in place')
+parser.add_argument('n_jobs',      type=int, nargs='?', default=1,  help='number of jobs (default: 1)')
+parser.add_argument('nhours',      type=int, nargs='?', default=16, help='wall-clock hours (default: 16, max 168)')
+parser.add_argument('-save_logs',   action='store_true', help='save stdout/stderr logs per job')
+parser.add_argument('-development', action='store_true', help='submit to development queue')
+parser.add_argument('-queue', metavar='NAME', default=None, help='override queue name')
+if len(__import__('sys').argv) == 1:
+    parser.print_help()
+    exit(1)
+args = parser.parse_args()
 
-if len( argv ) < 2:
-    Help()
+infile      = args.infile
+outdir      = args.outdir
+n_jobs      = args.n_jobs
+nhours      = args.nhours
+save_logs   = args.save_logs
+development = args.development
+user_input_queue = args.queue is not None
 
-infile = argv[1]
-
-try:
-    outdir = argv[2]
-except:
-    outdir = '0'
-
-try:
-    n_jobs = int( argv[3] )
-except:
-    n_jobs = 1
-    if outdir != '0': print( 'NEED TO SUPPLY NUMBER OF JOBS' )
+if outdir != '0' and n_jobs == 1:
+    print('NEED TO SUPPLY NUMBER OF JOBS')
 
 DO_MPI = False # May need to reactivate for XSEDE.
 
 hostname = ''
-hostname_tag = popen( 'hostname' ).readlines()[0]
+hostname_tag = subprocess.run(['hostname'], capture_output=True, text=True).stdout
 if hostname_tag.find( 'ls4' ) > -1: hostname = 'lonestar'
 if hostname_tag.find( 'DasLab' ) > -1 or hostname_tag.find( 'das' ) > -1: hostname = 'ade'
 if hostname_tag.find( 'stampede' ) > -1: hostname = 'stampede'
@@ -59,37 +65,19 @@ if hostname == 'sherlock':
     tasks_per_node_MPI = n_jobs if n_jobs < 24 else 24
     account = None
 
-save_logs = False
-if argv.count( '-save_logs' )>0:
-    save_logs = True
-    pos = argv.index( '-save_logs' )
-    del( argv[pos] )
-development = False
-if argv.count( '-development' )>0:
-    development = True
-    pos = argv.index( '-development' )
-    del( argv[pos] )
-
 # set name of queue to submit jobs to
 queue = 'normal'
-user_input_queue = False
-if '-queue' in argv:
-    idx = argv.index('-queue')
-    argv.pop(idx)
-    queue = argv.pop(idx)
-    user_input_queue = True
+if user_input_queue:
+    queue = args.queue
 elif development is True:
     queue = 'development'
 elif hostname in ['comet']:
     queue = 'compute'
 
-
-nhours = 16
-if len( argv ) > 4:
-    nhours = int( argv[4] )
-    if ( nhours > 168 ):  Help()
-    if hostname in ['sherlock', 'comet']:
-        nhours = min(nhours, 48)
+if nhours > 168:
+    parser.error('nhours must be <= 168')
+if hostname in ['sherlock', 'comet']:
+    nhours = min(nhours, 48)
 
 if not exists( infile ):
     print('Could not find: ', infile)
