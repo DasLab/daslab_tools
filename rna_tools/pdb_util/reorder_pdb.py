@@ -1,13 +1,14 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
+import argparse
 from read_pdb import read_pdb
-from sys import argv
 from make_tag import make_tag_with_dashes
 
+parser = argparse.ArgumentParser(description='Reorder atoms in PDB file(s) by chain and residue, writing to *.REORDER.pdb.')
+parser.add_argument('pdbfiles', nargs='+', help='PDB file(s) to reorder')
+args = parser.parse_args()
 
-pdbs = argv[1:]
-
-for main_pdb in pdbs:
+for main_pdb in args.pdbfiles:
 
     assert( main_pdb[-4:] == '.pdb' )
     outfile = main_pdb.replace( '.pdb', '.REORDER.pdb' )
