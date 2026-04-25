@@ -21,6 +21,10 @@ parser = argparse.ArgumentParser(
     formatter_class=argparse.RawDescriptionHelpFormatter,
 )
 parser.add_argument('destination', help='destination name (e.g. local, dropbox, gdrive, sherlock)')
+if len(sys.argv) == 1:
+    parser.print_help()
+    print('\nRun  cluster_info.py  to see available destinations.')
+    sys.exit(1)
 args = parser.parse_args()
 
 (cluster, remotedir) = cluster_check(args.destination)
