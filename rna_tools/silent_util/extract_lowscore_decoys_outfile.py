@@ -5,6 +5,16 @@ from sys import exit, stderr, stdout
 from os import popen
 from os.path import basename
 import subprocess
+import sys
+
+def _alias_hint(alias_name, full_command):
+    if '-h' not in sys.argv and '--help' not in sys.argv:
+        return ''
+    ok = subprocess.run(['/bin/bash', '-i', '-c', 'alias ' + alias_name],
+                        capture_output=True).returncode == 0
+    return ('Alias active: use  %s  instead of the full script name.' % alias_name
+            if ok else
+            'Tip: add to ~/.bashrc:\n  alias %s="%s"' % (alias_name, full_command))
 
 parser = argparse.ArgumentParser(
     description='Extract N lowest-scoring models from Rosetta silent file(s) into a new silent file.',
@@ -14,9 +24,7 @@ parser = argparse.ArgumentParser(
         '  exo silent.out -rms 5   — extract 5 lowest by rms\n'
         '  exo silent.out +rms 5   — extract 5 highest by rms\n'
         '  exo silent.out 2.5      — extract all with score < 2.5 (float = cutoff)\n'
-        '\n'
-        'Alias suggestion for ~/.bashrc:\n'
-        '  alias exo="extract_lowscore_decoys_outfile.py -out"'
+        '\n' + _alias_hint('exo', 'extract_lowscore_decoys_outfile.py -out')
     ),
     formatter_class=argparse.RawDescriptionHelpFormatter,
 )
