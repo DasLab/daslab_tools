@@ -1,39 +1,35 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
-from sys import stdout,argv
+import argparse
 from os import system
 
 def stripchain(actualpdbname, out, startchain, newchain, chainspecified):
     lines = open(actualpdbname,'r').readlines()
-#    out = open(actualpdbname_newchain,'w')
-    for i in range( len(lines)):
-        line = lines[i]
+    for line in lines:
         if (line.count('ATOM') or line.count('HETATM')) and (line[21:22] == startchain or not chainspecified):
             line = line[0:21]+newchain+line[22:]
-            out.write(line)
+        out.write(line)
     out.close()
 
 
-actualpdbnames = argv[1:-1]
-#actualpdbname_newchain = stdout
+parser = argparse.ArgumentParser(
+    description='Replace chain ID in PDB file(s) in place.',
+    epilog='The last argument is always the new chain ID; all preceding arguments are PDB files.',
+)
+parser.add_argument('pdbfiles_and_chain', nargs='+', metavar='pdbfile',
+                    help='one or more PDB files followed by the new chain ID as the last argument')
+args = parser.parse_args()
 
-for actualpdbname in actualpdbnames:
-    out = open('tmp','w')
-    newchain = argv[-1]
-    chainspecified = 0
-    startchain = '_'
-#    if len(argv)>3:
-#        startchain = argv[-2]
-#        if len(startchain) == 1:
-#            chainspecified = 1
+if len(args.pdbfiles_and_chain) < 2:
+    parser.error('provide at least one PDB file and a new chain ID')
 
-    if startchain == '-' or startchain =='_':
-        startchain = ' '
+pdbfiles = args.pdbfiles_and_chain[:-1]
+newchain = args.pdbfiles_and_chain[-1]
 
-    if newchain == '-' or newchain =='_':
-        newchain = ' '
+if newchain == '-' or newchain == '_':
+    newchain = ' '
 
-    stripchain(actualpdbname, out, startchain, newchain, chainspecified)
-
-    command = 'mv tmp '+actualpdbname
-    system(command)
+for actualpdbname in pdbfiles:
+    out = open('tmp', 'w')
+    stripchain(actualpdbname, out, ' ', newchain, 0)
+    system('mv tmp ' + actualpdbname)
