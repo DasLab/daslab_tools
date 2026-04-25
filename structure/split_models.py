@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import argparse
 from Bio.PDB import PDBParser, PDBIO
 import os
 
@@ -19,10 +20,7 @@ def split_models(input_pdb):
         model_number += 1
 
 if __name__ == "__main__":
-    import sys
-    if len(sys.argv) != 2:
-        print("Usage: python split_models.py <input_pdb_file>")
-        sys.exit(1)
-
-    input_pdb_file = sys.argv[1]
-    split_models(input_pdb_file)
+    parser = argparse.ArgumentParser(description='Split a multi-model PDB file into individual model files.')
+    parser.add_argument('pdbfile', help='input PDB file containing multiple models')
+    args = parser.parse_args()
+    split_models(args.pdbfile)
