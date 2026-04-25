@@ -2,13 +2,23 @@
 
 import argparse
 import subprocess
+import sys
 from os import system
 from os.path import abspath
 from cluster_info import cluster_check, strip_home_dirname
 
+def _alias_hint(alias_name, full_command):
+    if '-h' not in sys.argv and '--help' not in sys.argv:
+        return ''
+    ok = subprocess.run(['/bin/bash', '-i', '-c', 'alias ' + alias_name],
+                        capture_output=True).returncode == 0
+    return ('Alias active: use  %s  instead of the full script name.' % alias_name
+            if ok else
+            'Tip: add to ~/.bashrc:\n  alias %s="%s"' % (alias_name, full_command))
+
 parser = argparse.ArgumentParser(
     description='rsync files from a remote cluster to the current directory.',
-    epilog='Tip: alias this to rfc in your .bashrc:\n  alias rfc="rsync_from_cluster.py"',
+    epilog=_alias_hint('rfc', 'rsync_from_cluster.py'),
     formatter_class=argparse.RawDescriptionHelpFormatter,
 )
 parser.add_argument('cluster', help='cluster name (e.g. sherlock, oak)')
