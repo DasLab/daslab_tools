@@ -1,49 +1,39 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 ## look at fa scores
 
-import string
-from sys import argv
-from os import popen
+import argparse
+import subprocess
 import sys
 
-def Help():
-    print( argv[0] + ' <scorefilename>' )
-    print( )
-    print( '  Used for Rosetta silent files or score files -- figure out' )
-    print( '  which column numbers correspond to which score terms.' )
-    print( )
-    exit( 0 )
+parser = argparse.ArgumentParser(
+    description='Show which column numbers correspond to which score terms in a Rosetta silent or score file.',
+)
+parser.add_argument('scorefile', help='Rosetta silent file or score file')
+args = parser.parse_args()
 
-if len(argv) < 2:
-    Help()
+file1 = args.scorefile
 
-file1 = argv[1]
+inputfile = open(file1, 'r')
 
-inputfile=open(file1,"r")
-
-firstline=inputfile.readline()
+firstline = inputfile.readline()
 if firstline.find('desc') < 0:
-    firstline=inputfile.readline()
+    firstline = inputfile.readline()
 
 if firstline.find('desc') >= 0:
-    #Typical out file or score file
-    labels=firstline.split()
-    i=0
-    while i < len(labels) :
-        print( '%4d %s' % ( i+1, labels[i] ) )
-        i = i+1
+    labels = firstline.split()
+    for i, label in enumerate(labels):
+        print('%4d %s' % (i + 1, label))
 else:
-    lines = popen( 'grep SCORE '+file1+'| head -n 50').readlines()
-    if len( lines ) > 0:
-        cols =  lines[-1].split()
-        for i in range( len( cols )/2 ):
-            print( '%4d %s' %  (2*i+2, cols[2*i] ) )
+    lines = subprocess.run(['grep', 'SCORE', file1], capture_output=True, text=True).stdout.splitlines()[:50]
+    if len(lines) > 0:
+        cols = lines[-1].split()
+        for i in range(len(cols) // 2):
+            print('%4d %s' % (2 * i + 2, cols[2 * i]))
     else:
-        lines = popen( 'head -n 1 '+file1 ).readlines()
-        cols =  lines[0].split()
-        for i in range( len( cols ) ):
-            print( '%4d %s' % (i+1, cols[i]) )
+        firstline = open(file1).readline()
+        cols = firstline.split()
+        for i in range(len(cols)):
+            print('%4d %s' % (i + 1, cols[i]))
 
-
-print( )
-print( 'Score tags for: ',file1 )
+print()
+print('Score tags for: ', file1)
