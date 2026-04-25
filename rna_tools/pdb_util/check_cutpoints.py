@@ -1,18 +1,20 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
+import argparse
 from read_pdb import read_pdb
 from make_tag import make_tag
-from sys import argv
 from math import sqrt
 
-pdbs = argv[1:]
+parser = argparse.ArgumentParser(description='Check for cutpoints and C5\'-O5\' bond geometry issues in PDB file(s).')
+parser.add_argument('pdbfiles', nargs='+', help='PDB file(s) to check')
+args = parser.parse_args()
 
-for pdb in pdbs:
+for pdb in args.pdbfiles:
     CUTOFF = 1.8
 
     ( coords, pdb_lines, sequence ) = read_pdb( pdb )
 
-    print pdb
+    print(pdb)
 
     cutpoints = []
     for chain in coords.keys():
@@ -28,7 +30,7 @@ for pdb in pdbs:
                 dist = sqrt( dist2 )
                 if ( dist > CUTOFF ): cutpoints.append( rsd-1 )
 
-    print "Cutpoints: ", make_tag( cutpoints )
+    print("Cutpoints: ", make_tag( cutpoints ))
 
     cutpoints = []
     for chain in coords.keys():
@@ -43,5 +45,5 @@ for pdb in pdbs:
                 dist = sqrt( dist2 )
                 if ( dist > CUTOFF ): cutpoints.append( rsd )
 
-    print "C5'-O5' problem: ", make_tag( cutpoints )
-    print
+    print("C5'-O5' problem: ", make_tag( cutpoints ))
+    print()
