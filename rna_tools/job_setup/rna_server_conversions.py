@@ -1,8 +1,6 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # :noTabs=true:
-from __future__ import print_function
-import string
-
 from os import popen,system
 from os.path import exists,dirname,basename,abspath
 
@@ -222,7 +220,7 @@ def convert_fasta_to_rosetta_format( fasta_file_sequence ):
     lines = open( fasta_file_name ).readlines()
         '''
 
-    lines = map(lambda x: x+'\n', fasta_file_sequence.split('\n') )
+    lines = [x+'\n' for x in fasta_file_sequence.split('\n')]
 
     line = lines[0]
     if not line[0] == '>':
@@ -230,7 +228,7 @@ def convert_fasta_to_rosetta_format( fasta_file_sequence ):
         raise ValidationError("First line of fasta must start with '>'!")
         return None
 
-    sequence = string.join( lines[1:] ).replace( ' ','').replace('\n','')
+    sequence = ''.join( lines[1:] ).replace( ' ','').replace('\n','')
     sequence = sequence.lower()
 
     if len( sequence ) > MAX_SEQUENCE_LENGTH:
@@ -276,7 +274,7 @@ def does_PDB_match_fasta(pdb, fasta_file_sequence ):
     return ( seq_PDB == seq_fasta ) '''
 
     seq_PDB = get_sequence(pdb)
-    seq_fasta = string.join( fasta_file_sequence.split('\n')[1:] ).replace( '\n', '' ).replace(' ','' )
+    seq_fasta = ''.join( fasta_file_sequence.split('\n')[1:] ).replace( '\n', '' ).replace(' ','' )
 
     #print('does_PDB_match_fasta: pdb=%s\nfasta=%s' % (pdb, fasta_file_sequence))
     #print('does_PDB_match_fasta: %s %s' % (seq_PDB, seq_fasta))
@@ -302,7 +300,7 @@ def make_rna_rosetta_ready( pdb, removechain=False, ignore_chain=True, chainids 
 
     outstring = ''
 
-    lines = map(lambda x: x+'\n', pdb.split('\n') )
+    lines = [x+'\n' for x in pdb.split('\n')]
 
     #fastaid.write('>'+pdbname+'\n');
 

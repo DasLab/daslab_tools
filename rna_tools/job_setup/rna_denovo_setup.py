@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from rna_server_conversions import prepare_fasta_and_params_file_from_sequence_and_secstruct, get_all_stems
 from sys import argv
@@ -6,7 +6,6 @@ from os import system, getcwd
 from os.path import exists, dirname, basename
 from parse_options import parse_options, get_ints, get_resnum_chain
 from make_tag import make_tag, make_tag_with_dashes
-import string
 from rosetta_exe import rosetta_exe
 
 # I could make this a little bit smarter:
@@ -20,11 +19,11 @@ def flatten(l):
     return new_l
 
 def Help():
-    print
-    print argv[0] + " 'sequence in quotes'  'secstruct in quotes'  [tag]"
-    print
-    print "example:  "+argv[0]+" 'aaa uuu'  '((( )))' test"
-    print
+    print()
+    print(argv[0] + " 'sequence in quotes'  'secstruct in quotes'  [tag]")
+    print()
+    print("example:  "+argv[0]+" 'aaa uuu'  '((( )))' test")
+    print()
 
 if len(argv) < 3:
     Help()
@@ -61,7 +60,7 @@ extra_minimize_res_chain = parse_options( argv, "extra_minimize_res", [[-1],[" "
 extra_minimize_chi_res_chain = parse_options( argv, "extra_minimize_chi_res",[[-1],[" "]]  )
 virtual_anchor_res_chain = parse_options( argv, "virtual_anchor", [[-1],[" "]] )
 obligate_pair_res_chain = parse_options( argv, "obligate_pair", [[-1],[" "]] )
-obligate_pair = zip( obligate_pair_res_chain[0],obligate_pair_res_chain[1] )
+obligate_pair = list(zip( obligate_pair_res_chain[0],obligate_pair_res_chain[1] ))
 obligate_pair_explicit = parse_options( argv, "obligate_pair_explicit", [""] )
 remove_obligate_pair = parse_options( argv, "remove_obligate_pair", [-1] )
 remove_pair = parse_options( argv, "remove_pair", [-1] )
@@ -77,13 +76,13 @@ system( 'rm -rf %s' % out_script ) # output file with Rosetta command line -- wi
 #assert( len( argv ) == 1 )
 
 extra_args = ""
-if len( argv ) > 1: extra_args = string.join( argv[1:] )
+if len( argv ) > 1: extra_args = ' '.join( argv[1:] )
 
 if len(secstruct_general) > 0 and not bps_moves:
     raise ValueError("cannot supply secstruct_general without bps_moves")
 
 def is_even( num ):
-    return (  2 * (num/2) == num ) # even
+    return (  2 * (num//2) == num ) # even
 
 def working_res_map( vector, working_res, working_chain = [] ):
     if len( working_res ) == 0: return vector
@@ -92,7 +91,7 @@ def working_res_map( vector, working_res, working_chain = [] ):
     if isinstance( vector[ 0 ], list ): # its a list of residue, then list of chain
         assert( isinstance( vector[ 1 ], list ) )
         assert( len( working_chain ) == len( working_res ) )
-        working_res_chain = zip( working_res, working_chain )
+        working_res_chain = list(zip( working_res, working_chain ))
         for m in zip( vector[0], vector[1] ):
             if m in working_res_chain: working_vector.append( working_res_chain.index( m )+1 )
     else:
@@ -118,9 +117,9 @@ if len( fasta ) > 0 :
         sequence += line
 
 if len( full_model_res ) > 0 and len( full_model_res ) < len( sequence )+5:
-    print 'Thought we found a tag supplying model res and chain, but not enough to match sequence ... assuming residue numbering is 1,2,...'
+    print('Thought we found a tag supplying model res and chain, but not enough to match sequence ... assuming residue numbering is 1,2,...')
     full_model_res = []
-if len( full_model_res ) == 0: full_model_res = range( offset+1, offset+len(sequence)+1)
+if len( full_model_res ) == 0: full_model_res = list(range( offset+1, offset+len(sequence)+1))
 assert( len( full_model_res ) == len( sequence ) )
 
 if len( secstruct_file ) > 0 :
@@ -133,9 +132,9 @@ if len( secstruct_general ) == 0:
     for m in range(len(sequence)): secstruct_general += '.'
 
 if( not len( sequence ) == len( secstruct )):
-    print sequence
-    print secstruct
-    print 'Length of sequence & secstruct do not match: ', len( sequence ), len( secstruct )
+    print(sequence)
+    print(secstruct)
+    print('Length of sequence & secstruct do not match: ', len( sequence ), len( secstruct ))
     exit( 1 )
 assert( secstruct.count('(') == secstruct.count(')') )
 assert( secstruct.count('[') == secstruct.count(']') )
@@ -167,9 +166,9 @@ for i in range(len(working_res)):
     working_secstruct += secstruct[ full_model_res.index( m ) ]
     working_secstruct_general += secstruct_general[ full_model_res.index( m ) ]
 
-print working_sequence
-print working_secstruct
-print working_secstruct_general
+print(working_sequence)
+print(working_secstruct)
+print(working_secstruct_general)
 
 assert( working_secstruct.count('(') == working_secstruct.count(')') )
 assert( working_secstruct.count('[') == working_secstruct.count(']') )
@@ -214,8 +213,8 @@ for pdb in input_pdbs:
         if i in input_res: print('WARNING! Input residue %s exists in two pdb files!!' % i)
         actual_seq += sequence[ full_model_res.index( i )]
     if pdb_seq != actual_seq.lower():
-        print pdb_seq
-        print actual_seq
+        print(pdb_seq)
+        print(actual_seq)
         raise ValueError('The sequence in %s does not match input sequence!!' % pdb)
     resnum_list.append(resnum)
     chain_list.append(chain)
@@ -246,7 +245,7 @@ def already_listed_in_obligate_pair( new_pair, obligate_pair ):
     new_pos1 = new_pair[ 0 ]
     new_pos2 = new_pair[ 1 ]
     already_listed = False
-    for m in range( len( obligate_pair)/2 ):
+    for m in range( len( obligate_pair)//2 ):
         pos1 = obligate_pair[ 2*m ]
         pos2 = obligate_pair[ 2*m+1 ]
         if ( pos1 == new_pos1 and pos2 == new_pos2 ):
@@ -272,7 +271,7 @@ for resnum,chain in zip(resnum_list,chain_list):
     chunks.append(curr_chunk)
     n_jumps = len(chunks) - 1
     if n_jumps > 0:
-        for i in xrange(n_jumps):
+        for i in range(n_jumps):
             #obligate pairs
             new_pos1 = min( chunks[i][-1], chunks[i+1][0] )
             new_pos2 = max( chunks[i][-1], chunks[i+1][0] )
@@ -286,10 +285,10 @@ working_input_chain = []
 for m,chain in zip(input_res,input_chain):
     if (m,chain) not in zip(working_res,working_chain):
         # ignore chain
-        if all( map( lambda x: x == '', working_chain ) ): chain = ''
+        if all( x == '' for x in working_chain ): chain = ''
     if (m,chain) not in zip(working_res,working_chain):
         raise ValueError('Input residue %s,%s not in working_res!!' % (m,chain) )
-    i = zip(working_res,working_chain).index( (m,chain) )
+    i = list(zip(working_res,working_chain)).index( (m,chain) )
     working_input_res.append( i+1 )
     working_input_chain.append( chain )
 
@@ -337,13 +336,13 @@ if len( data_file ) > 0:
     lines = open( data_file ).readlines()
     working_data_string = ""
     for line in lines:
-        cols = string.split( line.replace( '\n','') )
+        cols = line.replace( '\n','').split()
         if cols[0] == 'DMS':
             data_res = int( cols[1] )
             working_data_res = working_res_map( [data_res], working_res )
-            if len( working_data_res ) > 0: working_data_string += cols[0]+' '+make_tag(working_data_res)+' '+string.join(cols[2:]) + '\n'
+            if len( working_data_res ) > 0: working_data_string += cols[0]+' '+make_tag(working_data_res)+' '+' '.join(cols[2:]) + '\n'
         else:
-            data_res = map( lambda x:int(x), cols[1:] )
+            data_res = [int(x) for x in cols[1:]]
             working_data_res = working_res_map( data_res, working_res )
             if len( working_data_res ) > 0: working_data_string += cols[0]+' '+make_tag(working_data_res)+'\n'
     if len( working_data_string ) > 0:
@@ -355,8 +354,8 @@ if len( data_file ) > 0:
 
 assert( is_even( len(obligate_pair) ) )
 if obligate_pair and len( obligate_pair[ 0 ] ) > 0:
-    working_res_chain = zip( working_res, working_chain )
-    for m in range( len( obligate_pair)/2 ):
+    working_res_chain = list(zip( working_res, working_chain ))
+    for m in range( len( obligate_pair)//2 ):
         pos1 = obligate_pair[ 2*m ]
         pos2 = obligate_pair[ 2*m+1 ]
         if pos1 not in working_res_chain: continue
@@ -368,7 +367,7 @@ if obligate_pair and len( obligate_pair[ 0 ] ) > 0:
 
 assert( is_even( len(remove_obligate_pair) ) )
 if len( remove_obligate_pair ) > 0:
-    for m in range( len( remove_obligate_pair)/2 ):
+    for m in range( len( remove_obligate_pair)//2 ):
         pos1 = remove_obligate_pair[ 2*m ]
         pos2 = remove_obligate_pair[ 2*m+1 ]
         if pos1 not in working_res: continue
@@ -390,15 +389,15 @@ if len( remove_obligate_pair ) > 0:
                         found_pair = 1
                         break
             if found_pair:
-                print 'Removing line: ', line
+                print('Removing line: ', line)
                 continue
             new_lines.append( line )
-        params_file_outstring = string.join( new_lines, '\n' )
+        params_file_outstring = '\n'.join( new_lines )
 
 
 assert( ( len(obligate_pair_explicit) % 5 == 0 ) )
 if len( obligate_pair_explicit ) > 0:
-    for m in range( len( obligate_pair_explicit)/5 ):
+    for m in range( len( obligate_pair_explicit)//5 ):
         pos1 = int( obligate_pair_explicit[ 5*m ] )
         pos2 = int( obligate_pair_explicit[ 5*m+1 ] )
         edge1 = obligate_pair_explicit[ 5*m+2 ]
@@ -438,11 +437,11 @@ if len( chain_connection ) > 0:
             for chain_connection_set in chain_connection_sets: params_file_outstring += "   SET1%s SET2%s" % (make_tag_with_dashes(chain_connection_set[0]), make_tag_with_dashes(chain_connection_set[1]) )
             params_file_outstring += "\n"
     else: # legacy format
-        chain_connection = map( lambda x:int(x), chain_connection )
+        chain_connection = [int(x) for x in chain_connection]
         assert( len( chain_connection ) % 4 == 0 )
-        n_connect = len( chain_connection ) / 4
+        n_connect = len( chain_connection ) // 4
         working_chain_connection = working_res_map( chain_connection, working_res )
-        for i in xrange(n_connect):
+        for i in range(n_connect):
             curr_0 = i * 4
             seg1_start = working_chain_connection[curr_0]
             seg1_stop  = working_chain_connection[curr_0 + 1]
@@ -496,34 +495,32 @@ if len(cst_file) > 0:  # also have input data...
                 assert( cst_tag == "atompairs" ) # must have cst file with atompairs first, then coordinates.
                 if len( cst_file_outstring ) == 0:
                     cst_file_outstring += line
-                print "WARNING! WARNING! WARNING! "
-                print "if you have atompairs in your .cst file, make sure to put them first!"
+                print("WARNING! WARNING! WARNING! ")
+                print("if you have atompairs in your .cst file, make sure to put them first!")
         else:
             cols = line.split()
             if len( cols ) < 4: continue
             if int(cols[1]) not in working_res: continue
             if int(cols[3]) not in working_res: continue
-            newline = "%s %d %s %d  %s\n" % (cols[0],  working_res.index(int(cols[1]))+1, cols[2],  working_res.index( int(cols[3]) )+1, string.join( cols[4:] ) )
+            newline = "%s %d %s %d  %s\n" % (cols[0],  working_res.index(int(cols[1]))+1, cols[2],  working_res.index( int(cols[3]) )+1, ' '.join( cols[4:] ) )
             cst_file_outstring += newline
 
 fasta_file = tag+'.fasta'
-print
-print 'Writing to fasta file: ', fasta_file
+print()
+print('Writing to fasta file: ', fasta_file)
 fid = open( fasta_file, 'w' )
-#print fasta_file_outstring
 fid.write( fasta_file_outstring )
 fid.close()
 
 params_file = tag+'.params'
-print 'Writing to params file: ', params_file
+print('Writing to params file: ', params_file)
 fid = open( params_file, 'w' )
-#print params_file_outstring
 fid.write( params_file_outstring )
 fid.close()
 
 if len( working_cst_file ) > 0 :
     cst_file = tag+'.cst'
-    print 'Writing to cst file: ', working_cst_file
+    print('Writing to cst file: ', working_cst_file)
     fid = open( working_cst_file, 'w' )
     #print cst_file_outstring
     fid.write( cst_file_outstring )
@@ -537,18 +534,18 @@ if ( len(native_pdb) > 0 and len( working_res ) > 0):
     command += " "+tag+"_"
     system( command )
     working_native_pdb = "%s_%s" % (tag,native_pdb)
-    print "Writing native to:", working_native_pdb
+    print("Writing native to:", working_native_pdb)
 
 
 #########################################
-print
-print "Sample command line: "
+print()
+print("Sample command line: ")
 
 
 if rosetta_folder == "":
-	rosetta_folder = None
+    rosetta_folder = None
 if extension == "":
-	extension = None
+    extension = None
 
 command  = rosetta_exe('rna_denovo', rosetta_folder, extension)
 command += " -nstruct %d -params_file %s -fasta %s  -out:file:silent %s.out -include_neighbor_base_stacks " % (nstruct, params_file, fasta_file, tag )
@@ -600,30 +597,26 @@ command += ' ' + extra_args
 
 command += ' -output_res_num ' + make_tag_with_dashes( working_res, working_chain )
 
-print command
+print(command)
 
-print "outputting command line to: ", out_script
+print("outputting command line to: ", out_script)
 with open( out_script, 'w' ) as fid:
     fid.write( command + "\n" )
 
-print
-print
-print "WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING!"
-print " This script rna_denovo_setup.py is deprecated.  "
-print " Instead, run your flags straight into the rosetta rna_denovo application: "
-print
-print "    rna_denovo",
-for arg in argv_input[1:]:
-    if arg == '-no_minimize': continue
-    print arg,
-command = ""
-command += " -include_neighbor_base_stacks "
+print()
+print()
+print("WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING!")
+print(" This script rna_denovo_setup.py is deprecated.  ")
+print(" Instead, run your flags straight into the rosetta rna_denovo application: ")
+print()
+filtered_args = [arg for arg in argv_input[1:] if arg != '-no_minimize']
+command = " -include_neighbor_base_stacks "
 if no_minimize:
     command += " -minimize_rna false"
 else:
     command += " -minimize_rna true"
-print command
-print
-print "WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING!"
+print("    rna_denovo " + ' '.join(filtered_args) + command)
+print()
+print("WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING!")
 
 
