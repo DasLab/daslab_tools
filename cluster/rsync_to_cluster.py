@@ -1,66 +1,48 @@
 #!/usr/bin/env python3
 
-from sys import argv,exit
-import string,subprocess
+import argparse
+import subprocess
 from os import system
-from os.path import basename,dirname,abspath,exists,expanduser
-from cluster_info import *
+from os.path import abspath, expanduser, basename
+from cluster_info import cluster_check, strip_home_dirname
 
-def Help():
-    print()
-    print( argv[0]+' <cluster> [<name of files to sync>]' )
-    print()
-    if ( subprocess.call( ['/bin/bash','-i','-c','alias r2c']) == 1 ):
-        print( "You may want to alias this command to r2c, by putting the following in your .bashrc: " )
-        print( ' alias r2c="rsync_to_cluster.py"' )
-    exit()
+parser = argparse.ArgumentParser(
+    description='rsync files from the current directory to a remote cluster.',
+    epilog='Tip: alias this to r2c in your .bashrc:\n  alias r2c="rsync_to_cluster.py"',
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+)
+parser.add_argument('cluster', help='cluster name (e.g. sherlock, oak)')
+parser.add_argument('files_and_flags', nargs=argparse.REMAINDER,
+                    help='files/dirs to sync and/or rsync flags (e.g. --exclude --delete)')
+args = parser.parse_args()
 
-if len(argv)<2:
-    Help()
-
-cluster_in = argv[1]
-(cluster,remotedir) = cluster_check( cluster_in )
-
+(cluster, remotedir) = cluster_check(args.cluster)
 if cluster == 'unknown':
-    Help()
+    parser.error('%s is not a known cluster' % args.cluster)
 
-args = argv[2:]
-dir = ''
+dirs = []
 extra_args = []
-
-# handle flags like '--exclude' and '--delete' correctly
-for m in args:
-    if len( m ) > 2 and m.find( '--' ) > -1:
-        extra_args.append( m )
+for m in args.files_and_flags:
+    if len(m) > 2 and '--' in m:
+        extra_args.append(m)
     else:
-        dir += ' '+m
+        dirs.append(m)
+if not dirs:
+    dirs = ['.']
 
-if len(dir) == 0: dir = '.'
+clusterdir = '"' + remotedir + strip_home_dirname(abspath('.')) + '"'
 
-username = basename( expanduser('~') )
-
-# strip off directory name based on local path.
-clusterdir = remotedir
-clusterdir += strip_home_dirname( abspath('.') )
-
-clusterdir = '"' + clusterdir + '"'
-#clusterdir = clusterdir.replace(' ','\ ') # space issues?
-
-# make sure directory on cluster is ready for files.
-command = 'mkdir -p '+clusterdir
-if len(cluster)>0:
+command = 'mkdir -p ' + clusterdir
+if cluster:
     command = 'ssh ' + cluster + ' ' + command
 print(command)
 system(command)
 
-cluster_prefix = cluster+':'
-if len(cluster) == 0: cluster_prefix = ''
-
-# Do it!
-#command = 'rsync -avzL '+dir+' '+cluster_prefix+clusterdir+' '+' '.join(extra_args)
-command = 'rsync -avL '+dir+' '+cluster_prefix+clusterdir+' '+' '.join(extra_args)
+cluster_prefix = cluster + ':' if cluster else ''
+command = 'rsync -avL ' + ' '.join(dirs) + ' ' + cluster_prefix + clusterdir + ' ' + ' '.join(extra_args)
 print(command)
 system(command)
+
 print()
-print( 'Ran the following command: ' )
+print('Ran the following command:')
 print(command)
