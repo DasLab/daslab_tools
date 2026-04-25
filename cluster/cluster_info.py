@@ -1,7 +1,6 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from os.path import expanduser,expandvars,basename
-from os import popen
 import subprocess
 
 user_name = basename( expanduser('~') )
@@ -135,7 +134,7 @@ def cluster_check( cluster_in ):
         cluster = '%s@comet.sdsc.xsede.org' % comet_user_name
         cluster_dir = '/home/%s/' % comet_user_name
 
-    hostname=popen('hostname').readlines()[0]
+    hostname=subprocess.run(['hostname'], capture_output=True, text=True).stdout
     if cluster.find('sherlock')>-1 and (hostname[:3]=='sh0'):  # local transfer on Sherlock
         cluster = ''
 
