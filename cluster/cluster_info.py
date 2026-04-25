@@ -15,7 +15,7 @@ xsede_dir_number = expandvars( '$XSEDE_DIR_NUMBER' )
 
 def cluster_check( cluster_in ):
     clusterlist = [ 'syd','niau','seth','bes','hapy','apep','gebb','ptah','yah','isis','yah','maat','nut','fin','dig','biox2','biox2_scratch','biox3','biox3_scratch','vanlang_scratch','ade','ade.stanford.edu','steele','steele_scratch','tg-condor','tg-condor_scratch','abe','ncsa','abe_scratch','ade_scratch','vanlang','kwipapat','kwip','lovejoy','tsuname','lovejoy_scratch','backup','lonestar','ranger','lonestar_work','lonestar_scratch','trestles','stampede','stampede_scratch',\
-                    'sherlock', 'comet', 'sherlock','sherlock_scratch','sherlock_group','sherlock_scratch_group','scratch','scratch_group','group','sg','ss','sherlock_oak','oak','local'];
+                    'sherlock', 'comet', 'sherlock','sherlock_scratch','sherlock_group','sherlock_scratch_group','scratch','scratch_group','group','sg','ss','sherlock_oak','oak','local','dropbox','gdrive'];
 
     cluster = cluster_in
     if cluster not in clusterlist:
@@ -113,6 +113,14 @@ def cluster_check( cluster_in ):
     if cluster == 'local':
         cluster = ''
         cluster_dir = '/Users/%s/LocalDataAnalysis/' % user_name
+
+    if cluster == 'dropbox':
+        cluster = ''
+        cluster_dir = '/Users/%s/Dropbox/' % user_name
+
+    if cluster == 'gdrive':
+        cluster = ''
+        cluster_dir = '/Users/%s/Library/CloudStorage/GoogleDrive-%s@stanford.edu/My Drive/' % (user_name, user_name)
 
     if cluster == 'abe_scratch':
         cluster = '%s@login-abe.ncsa.teragrid.org' % xsede_user_name
