@@ -9,11 +9,13 @@ from cluster_info import cluster_check, strip_home_dirname
 def _alias_hint(alias_name, full_command):
     if '-h' not in sys.argv and '--help' not in sys.argv:
         return ''
-    ok = subprocess.run(['/bin/bash', '-i', '-c', 'alias ' + alias_name],
+    ok = subprocess.run(['/bin/bash', '-i', '-c', 'type ' + alias_name],
                         capture_output=True).returncode == 0
-    return ('Alias active: use  %s  instead of the full script name.' % alias_name
+    hint = ('Shell function active: use  %s  instead of the full script name.' % alias_name
             if ok else
-            'Tip: add to ~/.bashrc:\n  alias %s="%s"' % (alias_name, full_command))
+            'Tip: add to ~/.bashrc:\n  %s() { target=$(%s "$@") && cd "$target"; }' % (alias_name, full_command))
+    hint += '\nNOTE: c2c must be a shell function (not a plain alias) so it can change your directory.'
+    return hint
 
 parser = argparse.ArgumentParser(
     description='Print the equivalent of the current directory in another location.',
@@ -32,7 +34,6 @@ if cluster == 'unknown':
     parser.error('%s is not a known destination' % args.destination)
 
 target = remotedir + strip_home_dirname(abspath('.'))
-
 if cluster == '':
     print(target)
 else:
@@ -41,3 +42,4 @@ else:
     print('Then cd to the equivalent directory:')
     print('  cd %s' % target)
     sys.exit(1)
+

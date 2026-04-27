@@ -49,8 +49,8 @@ cluster_prefix = cluster + ':' if cluster else ''
 
 commands = []
 for filename in filenames:
-    remote_filename = ' ' + cluster_prefix + clusterdir + '/' + filename
-    command = 'rsync -avL' + remote_filename + ' . ' + ' '.join(extra_args)
+    remote_spec = '"' + cluster_prefix + clusterdir + '/' + filename + '"'
+    command = 'rsync -avL ' + remote_spec + ' . ' + ' '.join(extra_args)
     print(command)
     system(command)
     commands.append(command)

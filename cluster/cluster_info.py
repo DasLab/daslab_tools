@@ -69,7 +69,7 @@ def cluster_check(cluster_in):
 
     if cluster == 'gdrive':
         cluster = ''
-        cluster_dir = '/Users/%s/Library/CloudStorage/GoogleDrive-%s@stanford.edu/My Drive/' % (user_name, user_name)
+        cluster_dir = '/Users/%s/Google Drive/My Drive/' % (user_name)
 
     hostname = subprocess.run(['hostname'], capture_output=True, text=True).stdout
     if 'sherlock' in cluster and hostname[:3] == 'sh0':  # local transfer on Sherlock
@@ -83,6 +83,7 @@ def strip_home_dirname(clusterdir):
     clusterdir = clusterdir.replace('Dropbox/', '')
     clusterdir = clusterdir.replace('LocalDataAnalysis/', '')
     clusterdir = clusterdir.replace('Library/CloudStorage/GoogleDrive-%s@stanford.edu/My Drive/' % user_name, '')
+    clusterdir = clusterdir.replace('Google Drive/My Drive/','')
     clusterdir = clusterdir.replace('Library/CloudStorage/', '')
     clusterdir = clusterdir.replace('/scratch/users/%s/' % user_name, '')
     clusterdir = clusterdir.replace('/scratch/groups/rhiju/%s/' % user_name, '')
