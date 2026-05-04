@@ -74,6 +74,7 @@ def main():
     parser.add_argument("-p", "--pdb", required=True, help="PDB file (e.g., 6CHR.pdb). Residue numbering should correspond to 1,2,3,.. for FASTA")
     parser.add_argument("-c", "--chain", default="A", help="Chain ID in PDB to use (default A)")
     parser.add_argument("-o", "--out", default="target_thread.pdb", help="Output PDB filename")
+    parser.add_argument("--zerofill", action="store_true", help="Add C1' atom at (0,0,0) for target residues missing from template")
     args = parser.parse_args()
 
     ba_seq, pdb_aln_seq = parse_alignment(args.alignment)
@@ -142,8 +143,11 @@ def main():
                 # template residue not resolved in PDB -> skip (silent)
                 continue
 
-    # Build new structure containing only backbone atoms for the mapped residues,
-    # renumber residues to target positions and set residue name to target letter
+    import numpy as np
+
+    target_full_seq = ba_seq.replace('-', '')
+    covered_resnums = set(r[0] for r in to_write)
+
     new_struct = Structure.Structure("target_thread")
     new_model = Model.Model(0)
     new_chain = Chain.Chain(args.chain)
@@ -151,32 +155,42 @@ def main():
     new_struct.add(new_model)
 
     atom_serial = 1
-    for (target_resnum, src_res, target_letter) in to_write:
-        new_id = (' ', int(target_resnum), ' ')
-        new_resname = target_letter  # single-letter as requested
-        new_res = Residue.Residue(new_id, new_resname, '')
-        for atom in src_res.get_atoms():
-            aname = atom.get_name()
-            if not is_backbone_atom_name(aname):
-                continue
-            coord = atom.get_coord()
-            bfactor = atom.get_bfactor()
-            occupancy = atom.get_occupancy() if atom.get_occupancy() is not None else 1.00
-            altloc = atom.get_altloc() if hasattr(atom, "get_altloc") else " "
-            fullname = f"{aname:>4}"
-            # element detection
-            element = None
-            if hasattr(atom, "element") and atom.element is not None:
-                element = atom.element.strip()
-            else:
-                s = aname.strip()
-                element = s[0].upper() if s and s[0].isalpha() else "X"
-            new_atom = Atom.Atom(aname, coord, bfactor, occupancy, altloc, fullname, atom_serial, element)
+    write_idx = 0
+    for resnum_1based in range(1, len(target_full_seq) + 1):
+        if write_idx < len(to_write) and to_write[write_idx][0] == resnum_1based:
+            target_resnum, src_res, target_letter = to_write[write_idx]
+            write_idx += 1
+            new_id = (' ', int(target_resnum), ' ')
+            new_res = Residue.Residue(new_id, target_letter, '')
+            for atom in src_res.get_atoms():
+                aname = atom.get_name()
+                if not is_backbone_atom_name(aname):
+                    continue
+                coord = atom.get_coord()
+                bfactor = atom.get_bfactor()
+                occupancy = atom.get_occupancy() if atom.get_occupancy() is not None else 1.00
+                altloc = atom.get_altloc() if hasattr(atom, "get_altloc") else " "
+                fullname = f"{aname:>4}"
+                element = None
+                if hasattr(atom, "element") and atom.element is not None:
+                    element = atom.element.strip()
+                else:
+                    s = aname.strip()
+                    element = s[0].upper() if s and s[0].isalpha() else "X"
+                new_atom = Atom.Atom(aname, coord, bfactor, occupancy, altloc, fullname, atom_serial, element)
+                new_res.add(new_atom)
+                atom_serial += 1
+            if len(list(new_res.get_atoms())) > 0:
+                new_chain.add(new_res)
+        elif args.zerofill:
+            target_letter = target_full_seq[resnum_1based - 1]
+            new_id = (' ', resnum_1based, ' ')
+            new_res = Residue.Residue(new_id, target_letter, '')
+            coord = np.array([0.0, 0.0, 0.0], dtype='f')
+            new_atom = Atom.Atom("C1'", coord, 0.0, 1.0, " ", " C1'", atom_serial, "C")
             new_res.add(new_atom)
             atom_serial += 1
-        if len(list(new_res.get_atoms())) > 0:
             new_chain.add(new_res)
-        # otherwise skip residue if it had no backbone atoms
 
     io = PDBIO()
     io.set_structure(new_struct)
