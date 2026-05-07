@@ -74,7 +74,7 @@ def main():
                         help='PDB file(s) to align (use with -refpdb). Globs allowed.')
     parser.add_argument('inputs', nargs='*',
                         help='Legacy: first is ref PDB, rest are query PDBs (use when not using -refpdb).')
-    parser.add_argument('-atom', default=" C3'", help='4-char atom name (default: " C3\'")')
+    parser.add_argument('-atom', default=" C1'", help='4-char atom name (default: " C1\'")')
     parser.add_argument('-t', '--tabular', action='store_true', help='output in csv format')
     parser.add_argument('-v', '--verbose', action='store_true', help='print command and full output')
 

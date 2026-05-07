@@ -115,7 +115,7 @@ def main():
     parser.add_argument('-force_mm', action='store_true', help='force align multimer (default auto-detect)')
     parser.add_argument('-force_monomer', action='store_true', help='force align monomer (default auto-detect)')
     parser.add_argument('-mm', default=-1, type=int, help='force specific -mm in USalign')
-    parser.add_argument('-atom', default="C3'", help='atom representative, up to 4 characters (default: "C3\'") ')
+    parser.add_argument('-atom', default=" C1'", help='atom representative, up to 4 characters (default: " C1\'") ')
     parser.add_argument('-d', type=float, default=None, help='assign distance parameter d0 for TM-score')
     parser.add_argument('-t', '--tabular', action='store_true', help='output in csv format')
     parser.add_argument('--hetatm', action='store_true', help='Use heteroatom residues in alignment')
