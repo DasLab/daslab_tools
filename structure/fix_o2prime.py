@@ -19,12 +19,10 @@ are NOT restored in the output (the fixed file is suitable for LDDT scoring
 but not for visualising the full complex).
 """
 
-import argparse, os, subprocess, sys, tempfile
+import argparse, shutil, subprocess, sys, tempfile
 from pathlib import Path
 
 from Bio.PDB import MMCIFParser, PDBParser, PDBIO, MMCIFIO
-
-ARENA = os.path.expanduser("~/src/Arena/Arena")
 
 # Standard + common modified RNA residue names
 RNA_RESIDUES = {
@@ -125,7 +123,7 @@ def save_structure(structure, outpath: Path, is_cif: bool):
 
 def run_arena(input_pdb: Path, output_pdb: Path, option: int = 5):
     result = subprocess.run(
-        [ARENA, str(input_pdb), str(output_pdb), str(option)],
+        ['Arena', str(input_pdb), str(output_pdb), str(option)],
         capture_output=True, text=True,
     )
     if result.returncode != 0:
@@ -182,8 +180,8 @@ def main():
                     help="Arena reconstruction option (default 5)")
     args = ap.parse_args()
 
-    if not Path(ARENA).exists():
-        sys.exit(f"Arena binary not found: {ARENA}")
+    if not shutil.which('Arena'):
+        sys.exit("Arena not found in PATH. Download and install from https://github.com/pylelab/Arena")
 
     outdir = Path(args.outdir) if args.outdir else None
     if outdir:
