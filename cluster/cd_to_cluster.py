@@ -40,6 +40,10 @@ target = remotedir + strip_home_dirname(abspath('.'))
 if cluster == '':
     if args.make_dirs:
         os.makedirs(target, exist_ok=True)
+    elif not os.path.isdir(target):
+        print('Different filesystem (%s). No such directory on this machine:' % args.destination, file=sys.stderr)
+        print('  %s' % target, file=sys.stderr)
+        sys.exit(1)
     print(target)
 else:
     print('Different filesystem (%s). SSH there with:' % args.destination)
