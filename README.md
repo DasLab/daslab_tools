@@ -19,6 +19,28 @@ export PYTHONPATH="$PYTHONPATH$(printf ':%s' $HOME/src/daslab_tools/rna_tools $H
 
 Then run `source ~/.bashrc`. The glob `*/` picks up all subdirectories automatically, so no changes are needed when new subdirectories are added.
 
+### Recommended aliases
+
+Add these to your `~/.bashrc` for the short aliases shown in the tool listings below:
+
+```bash
+alias rc=$HOME/src/daslab_tools/seq/rc.py
+alias r2d=$HOME/src/daslab_tools/seq/rna2dna.py
+alias d2r=$HOME/src/daslab_tools/seq/dna2rna.py
+alias r2c='rsync_to_cluster.py'
+alias rfc='rsync_from_cluster.py'
+alias fp='fields.py'
+alias ex='extract_lowscore_decoys.py'
+alias exo='extract_lowscore_decoys_outfile.py -out'
+alias rpip='renumber_pdb_in_place.py'
+```
+
+`cd_to_cluster.py` (`c2c`) requires a **shell function**, not an alias — a Python script cannot change the parent shell's working directory, so the script prints the target path and the shell wrapper does the `cd`:
+
+```bash
+c2c() { target=$(cd_to_cluster.py "$@") && cd "$target"; }
+```
+
 ## Tools by directory
 
 ### `structure/`
@@ -41,7 +63,8 @@ Then run `source ~/.bashrc`. The glob `*/` picks up all subdirectories automatic
 
 ### `seq/`
 - **`rc.py`** — reverse complement a DNA or RNA sequence
-- **`rna2dna.py`** — convert an RNA sequence to DNA (U→T)
+- **`rna2dna.py`** (`r2d`) — convert an RNA sequence or FASTA file to DNA (U→T)
+- **`dna2rna.py`** (`d2r`) — convert a DNA sequence or FASTA file to RNA (T→U)
 - **`gel_from_fastq.py`** — simulate a gel image from FASTQ read-length distribution
 - **`sam_counts.py`** — count reads per reference sequence from a SAM file
 
