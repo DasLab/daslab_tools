@@ -52,6 +52,13 @@ c2c() { target=$(cd_to_cluster.py "$@") && cd "$target"; }
 - **`fix_o2prime.py`** — strip and rebuild O2′ atoms (fixes bad geometry from some structure predictors)
 - **`USalign.py`** — wrapper for USalign structure superposition and TM-score
 
+### `protocol/`
+- **`rdx_check.py`** — validate an RDX protocol sheet exported as `.xlsx`: premix arithmetic,
+  totals, aliquot side cells, live formulas, Arial/bold/rule typography, purpose and note
+  lengths, stray blank rows and spacer columns, and artifacts from Sheets' type parser
+  (text eaten as a date serial, `40%` flattened to `0.4`, doubled `%%`). Exits non-zero on
+  any error, so it can gate a protocol before it reaches the bench.
+
 ### `cluster/`
 - **`rsync_to_cluster.py`** (`r2c`) — rsync files from the current directory to a named cluster destination
 - **`rsync_from_cluster.py`** (`rfc`) — rsync files from a named cluster destination to the current directory
