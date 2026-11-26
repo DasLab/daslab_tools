@@ -215,36 +215,81 @@ def crosses(p, q):
     return a < c < b < d or c < a < d < b
 
 
-def assign_brackets(pairs_idx, n, segments=None):
+def assign_brackets(pairs_idx, n, segments=None, dropped=None):
     """Greedy page assignment, one page per helix, largest helix first. The dominant
     stem therefore comes out as "()" and crossing helices fall to "[]", "{}", "<>",
     which is the convention DSSR's own dbn follows. Inter-chain pairs are kept, so
-    `segments` is accepted for signature compatibility but not used to split."""
+    `segments` is accepted for signature compatibility but not used to split.
+
+    A dot-bracket gives each position one character, so each nucleotide can carry at
+    most ONE partner. When the input has a nucleotide in several pairs (a G-tetrad G
+    pairs with two neighbours, an i-motif C:C+ stack, a base triple), the pair met
+    first in the priority order above (larger helix first, then lower index) is kept
+    and the rest are skipped. Before this rule, the later pair silently overwrote the
+    earlier one's character and left its partner's bracket unmatched, which no parser
+    can read. Pass a list as `dropped` to collect the skipped pairs (also pairs beyond
+    the last available page). The result is checked to balance before it is returned."""
     out = ["."] * n
+    for (i, j) in pairs_idx:
+        if not (0 <= i < n and 0 <= j < n):
+            raise IndexError(
+                "base-pair index (%d, %d) is outside a structure of length %d. "
+                "The caller's pair indices are not positions in this bracket "
+                "array -- note DSSR's JSON `index_chain` is a GLOBAL index "
+                "across chains, not a position within one chain." % (i, j, n))
     helices = group_helices(pairs_idx)
     helices.sort(key=lambda h: (-len(h), min(h)))
+    used, skipped = set(), []
     pages = []
     for helix in helices:
+        keep = []
+        for (i, j) in sorted(helix):
+            if i in used or j in used or i == j:
+                skipped.append((i, j))
+            else:
+                keep.append((i, j))
+                used.update((i, j))
+        if not keep:
+            continue
         placed = False
         for pi, page in enumerate(pages):
-            if all(not crosses(x, y) for x in helix for y in page):
-                page.extend(helix)
+            if all(not crosses(x, y) for x in keep for y in page):
+                page.extend(keep)
                 placed = True
                 break
         if not placed:
-            pages.append(list(helix))
+            pages.append(list(keep))
             pi = len(pages) - 1
         if pi < len(BRACKETS):
             o, c = BRACKETS[pi]
-            for (i, j) in helix:
-                if not (0 <= i < n and 0 <= j < n):
-                    raise IndexError(
-                        "base-pair index (%d, %d) is outside a structure of length %d. "
-                        "The caller's pair indices are not positions in this bracket "
-                        "array -- note DSSR's JSON `index_chain` is a GLOBAL index "
-                        "across chains, not a position within one chain." % (i, j, n))
+            for (i, j) in keep:
                 out[i], out[j] = o, c
-    return "".join(out), len(pages)
+        else:
+            skipped.extend(keep)
+    db = "".join(out)
+    check_balanced(db)
+    if dropped is not None:
+        dropped.extend(sorted(skipped))
+    return db, len(pages)
+
+
+def check_balanced(db):
+    """Raise ValueError unless every bracket of every page in `db` is matched."""
+    opens = {o: c for o, c in BRACKETS}
+    closes = {c: o for o, c in BRACKETS}
+    stacks = {}
+    for k, ch in enumerate(db):
+        if ch in opens:
+            stacks.setdefault(ch, []).append(k)
+        elif ch in closes:
+            if not stacks.get(closes[ch]):
+                raise ValueError("unbalanced %r at position %d in %s" % (ch, k + 1, db))
+            stacks[closes[ch]].pop()
+        elif ch != ".":
+            raise ValueError("illegal character %r at position %d" % (ch, k + 1))
+    left = [o for o, st in stacks.items() if st]
+    if left:
+        raise ValueError("unclosed %r in %s" % (left[0], db))
 
 
 def run_one(infile, args, dssr_bin):
