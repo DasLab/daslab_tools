@@ -54,6 +54,7 @@ def make_plot(filepaths):
         fig, ax = plt.subplots(figsize=(8, 6))
         ax.scatter(df[rms_col], df['score'], s=30, alpha=0.5, linewidths=0,
                    color=colors[0])
+        ax.set_ylim(top=float(df['score'].quantile(0.9)) + 10)
         ax.set_xlabel(rms_col)
         ax.set_ylabel('score')
         ax.set_title(title)
@@ -61,14 +62,17 @@ def make_plot(filepaths):
         # Multiple files: overlay on one plot, save in the directory of the first file
         fig, ax = plt.subplots(figsize=(9, 6))
         rms_col_used = None
+        all_scores = []
         for i, filepath in enumerate(filepaths):
             df = parse_out_file(filepath)
             rms_col = get_rms_col(df, filepath)
             rms_col_used = rms_col
+            all_scores.append(df['score'])
             label = os.path.basename(filepath)
             ax.scatter(df[rms_col], df['score'], s=30, alpha=0.5, linewidths=0,
                        color=colors[i % len(colors)], label=label)
 
+        ax.set_ylim(top=float(pd.concat(all_scores).quantile(0.9)) + 10)
         ax.set_xlabel(rms_col_used)
         ax.set_ylabel('score')
         ax.set_title('Score vs. RMS')
