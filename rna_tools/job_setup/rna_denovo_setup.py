@@ -39,14 +39,14 @@ nstruct = parse_options(argv, "nstruct", 500)
 sequence = parse_options( argv, "sequence", "" )
 secstruct = parse_options( argv, "secstruct", "")
 secstruct_general = parse_options( argv, "secstruct_general", "")
-(working_res,working_chain) = parse_options( argv, "working_res", [[-1],[" "]] )
+(working_res,working_chain,_) = parse_options( argv, "working_res", [[-1],[" "],[" "]] )
 offset = parse_options( argv, "offset", 0 )
 tag = parse_options( argv, 'tag', "" )
 fasta = parse_options( argv, 'fasta', "" )
 secstruct_file = parse_options( argv, 'secstruct_file', "" )
 input_pdbs = parse_options( argv, 's', [""] )
 input_silent_files = parse_options( argv, 'silent', [""] )
-(input_silent_res,input_silent_chain) = parse_options( argv, 'input_silent_res', [[-1],[" "]] )
+(input_silent_res,input_silent_chain,_) = parse_options( argv, 'input_silent_res', [[-1],[" "],[" "]] )
 fixed_stems = parse_options( argv, 'fixed_stems', False )
 no_minimize = parse_options( argv, 'no_minimize', False )
 is_cst_gap = parse_options( argv, 'cst_gap', False )
@@ -54,12 +54,12 @@ native_pdb = parse_options( argv, 'native', "" )
 working_native_pdb = parse_options( argv, 'working_native', "" )
 cst_file = parse_options( argv, 'cst_file', "" )
 data_file = parse_options( argv, 'data_file', "" )
-cutpoint_open_res_chain = parse_options( argv, "cutpoint_open", [[-1],[" "]] )
-cutpoint_closed_res_chain = parse_options( argv, "cutpoint_closed", [[-1],[" "]] )
-extra_minimize_res_chain = parse_options( argv, "extra_minimize_res", [[-1],[" "]] )
-extra_minimize_chi_res_chain = parse_options( argv, "extra_minimize_chi_res",[[-1],[" "]]  )
-virtual_anchor_res_chain = parse_options( argv, "virtual_anchor", [[-1],[" "]] )
-obligate_pair_res_chain = parse_options( argv, "obligate_pair", [[-1],[" "]] )
+cutpoint_open_res_chain = parse_options( argv, "cutpoint_open", [[-1],[" "],[" "]] )
+cutpoint_closed_res_chain = parse_options( argv, "cutpoint_closed", [[-1],[" "],[" "]] )
+extra_minimize_res_chain = parse_options( argv, "extra_minimize_res", [[-1],[" "],[" "]] )
+extra_minimize_chi_res_chain = parse_options( argv, "extra_minimize_chi_res",[[-1],[" "],[" "]]  )
+virtual_anchor_res_chain = parse_options( argv, "virtual_anchor", [[-1],[" "],[" "]] )
+obligate_pair_res_chain = parse_options( argv, "obligate_pair", [[-1],[" "],[" "]] )
 obligate_pair = list(zip( obligate_pair_res_chain[0],obligate_pair_res_chain[1] ))
 obligate_pair_explicit = parse_options( argv, "obligate_pair_explicit", [""] )
 remove_obligate_pair = parse_options( argv, "remove_obligate_pair", [-1] )
@@ -68,6 +68,16 @@ chain_connection = parse_options( argv, "chain_connection", [""] )
 bps_moves = parse_options( argv, "bps_moves", False )
 rosetta_folder = parse_options( argv, "rosetta_folder", "" )
 extension = parse_options( argv, "extension", "" )
+
+# Extract positional args (sequence, secstruct, tag) if not given as -flags.
+# parse_options deletes recognized flags+values from argv in-place, so argv[1:]
+# now contains only unprocessed positional args.
+if len(sequence) == 0 and len(argv) > 1 and not argv[1].startswith('-'):
+    sequence = argv[1]; del argv[1]
+if len(secstruct) == 0 and len(argv) > 1 and not argv[1].startswith('-'):
+    secstruct = argv[1]; del argv[1]
+if tag == '' and len(argv) > 1 and not argv[1].startswith('-'):
+    tag = argv[1]; del argv[1]
 
 system( 'rm -rf %s' % out_script ) # output file with Rosetta command line -- will be replaced by this script.
 #input_res and cutpoint_closed changes to be auto-generated
