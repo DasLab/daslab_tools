@@ -8,12 +8,15 @@ biox3_user_name = expandvars('$BIOX3_USER_NAME')
 if biox3_user_name == '$BIOX3_USER_NAME': biox3_user_name = user_name
 sherlock_user_name = expandvars('$SHERLOCK_USER_NAME')
 if sherlock_user_name == '$SHERLOCK_USER_NAME': sherlock_user_name = user_name
+imp_user_name = expandvars('$IMP_USER_NAME')
+if imp_user_name == '$IMP_USER_NAME': imp_user_name = user_name
 
 def cluster_check(cluster_in):
     clusterlist = [
         'biox3', 'biox3_scratch',
         'sherlock', 'sherlock_scratch', 'sherlock_group', 'sherlock_scratch_group',
         'scratch', 'scratch_group', 'group', 'sg', 'ss', 'sherlock_oak', 'oak',
+        'imp', 'imp_scratch', 'imps',
         'local', 'dropbox', 'gdrive',
     ]
 
@@ -30,6 +33,7 @@ def cluster_check(cluster_in):
     if cluster == 'sg':             cluster = 'sherlock_scratch_group'
     if cluster == 'group':          cluster = 'sherlock_group'
     if cluster == 'oak':            cluster = 'sherlock_oak'
+    if cluster == 'imps':           cluster = 'imp_scratch'
 
     if cluster == 'biox3':
         cluster = '%s@biox3.stanford.edu' % biox3_user_name
@@ -38,6 +42,14 @@ def cluster_check(cluster_in):
     if cluster == 'biox3_scratch':
         cluster = '%s@biox3.stanford.edu' % biox3_user_name
         cluster_dir = '/scratch/users/%s/' % biox3_user_name
+
+    if cluster == 'imp':
+        cluster = '%s@imp.stanford.edu' % imp_user_name
+        cluster_dir = '/home/%s/' % imp_user_name
+
+    if cluster == 'imp_scratch':
+        cluster = '%s@imp.stanford.edu' % imp_user_name
+        cluster_dir = '/scratch/%s/' % imp_user_name
 
     if cluster == 'sherlock':
         cluster = '%s@login.sherlock.stanford.edu' % sherlock_user_name
@@ -74,6 +86,8 @@ def cluster_check(cluster_in):
     hostname = subprocess.run(['hostname'], capture_output=True, text=True).stdout
     if 'sherlock' in cluster and hostname[:3] == 'sh0':  # local transfer on Sherlock
         cluster = ''
+    if 'imp.stanford.edu' in cluster and hostname.strip() == 'imp':  # local transfer on imp
+        cluster = ''
 
     return (cluster, cluster_dir)
 
@@ -86,6 +100,7 @@ def strip_home_dirname(clusterdir):
     clusterdir = clusterdir.replace('Google Drive/My Drive/','')
     clusterdir = clusterdir.replace('Library/CloudStorage/', '')
     clusterdir = clusterdir.replace('/scratch/users/%s/' % user_name, '')
+    clusterdir = clusterdir.replace('/scratch/%s/' % user_name, '')
     clusterdir = clusterdir.replace('/scratch/groups/rhiju/%s/' % user_name, '')
     clusterdir = clusterdir.replace('/home/users/%s/' % user_name, '')
     clusterdir = clusterdir.replace('/home/%s/' % user_name, '')
@@ -107,6 +122,8 @@ if __name__ == '__main__':
         ('sherlock_group',         ['group']),
         ('sherlock_scratch_group', ['scratch_group', 'sg']),
         ('sherlock_oak',           ['oak']),
+        ('imp',                    []),
+        ('imp_scratch',            ['imps']),
         ('biox3',                  []),
         ('biox3_scratch',          []),
     ]
