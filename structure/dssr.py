@@ -31,6 +31,12 @@ PAIR_HDR = re.compile(r"List of (\d+) base pairs?")
 PAIR_ROW = re.compile(
     r"^\s*(\d+)\s+(\S+)\s+(\S+)\s+(\S\S\S)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s*$")
 NT = re.compile(r"^(?:([\w']+)\.)?(.+?)(-?\d+)(?:\^(\w))?$")
+# The per-nucleotide listing near the end of the -o output, e.g.
+#   "   1  C . B.DC1     0.007  anti,~C2'-endo,non-canonical,...,i-motif"
+# columns: serial, one-letter name, dbn char, chain-qualified id, base-ring rmsd,
+# comma-separated features. Its serial IS the position in dssr-2ndstrs.dbn/.ct.
+NT_ROW = re.compile(
+    r"^\s*(\d+)\s+(\S)\s+(\S)\s+(\S+)\s+(-?\d+\.\d+)\s+(\S.*)$")
 
 BRACKETS = [("(", ")"), ("[", "]"), ("{", "}"), ("<", ">")] + [
     (chr(ord("A") + i), chr(ord("a") + i)) for i in range(26)]
@@ -71,6 +77,33 @@ def parse_dssr_output(text):
             i += 1
         break
     return pairs
+
+
+def parse_nt_list(text):
+    """Ordered nt ids from the per-nucleotide listing of the -o output.
+
+    This is the authoritative index: its serial numbers ARE the positions in
+    dssr-2ndstrs.dbn and .ct, chain order included. Preferred over inferring chain
+    order from the order chains first appear in the pair list, which is only a
+    heuristic -- an entry can list its chains in the dbn in a different order than
+    its pairs mention them, and then every pair of the later chain is placed in the
+    wrong segment.
+
+    Returns [] if the section is absent, so the caller can fall back.
+    """
+    order, want = [], 1
+    for line in text.splitlines():
+        m = NT_ROW.match(line)
+        if not m:
+            continue
+        serial, _, dbn_ch, nt_id, _, _ = m.groups()
+        if int(serial) != want:
+            continue
+        if len(dbn_ch) != 1 or not NT.match(nt_id):
+            continue
+        order.append(nt_id)
+        want += 1
+    return order
 
 
 def nt_parts(nt_id):
@@ -204,6 +237,12 @@ def assign_brackets(pairs_idx, n, segments=None):
         if pi < len(BRACKETS):
             o, c = BRACKETS[pi]
             for (i, j) in helix:
+                if not (0 <= i < n and 0 <= j < n):
+                    raise IndexError(
+                        "base-pair index (%d, %d) is outside a structure of length %d. "
+                        "The caller's pair indices are not positions in this bracket "
+                        "array -- note DSSR's JSON `index_chain` is a GLOBAL index "
+                        "across chains, not a position within one chain." % (i, j, n))
                 out[i], out[j] = o, c
     return "".join(out), len(pages)
 
@@ -234,7 +273,15 @@ def run_one(infile, args, dssr_bin):
         if ct is None:
             return None
         chain_lens = [len(c) for c in seq.split("&")]
-        idx_of = map_pairs_to_indices(pairs, ct, chain_lens)
+        # Prefer the -o nucleotide listing: its serials are the dbn positions outright,
+        # so no chain-order inference is needed. Fall back to resnum matching only if
+        # that section is missing or disagrees with the dbn length.
+        text = open(outp, errors="replace").read()
+        order = parse_nt_list(text)
+        if order and len(order) == sum(chain_lens):
+            idx_of = {nid: k for k, nid in enumerate(order)}
+        else:
+            idx_of = map_pairs_to_indices(pairs, ct, chain_lens)
 
         use = []
         for p in pairs:
