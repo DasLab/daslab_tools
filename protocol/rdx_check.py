@@ -67,6 +67,9 @@ def text(v):
     return v.strip() if isinstance(v, str) else ""
 
 
+DASHES = ("-", "\u2013", "\u2014")
+
+
 def blank(v):
     """True only for a genuinely empty cell. A numeric cell is not blank."""
     return v is None or (isinstance(v, str) and v.strip() == "")
@@ -167,8 +170,10 @@ def find_grids(sh, last):
                     break
                 first = u - 1
                 continue
-            # a row whose first value cell holds text is the column-header row
-            if num(sh.v(u, lab + 1)) is None and text(sh.v(u, lab + 1)):
+            # a row whose first value cell holds text is the column-header row --
+            # but a lone dash is a "not in this column" placeholder, not a header
+            head = text(sh.v(u, lab + 1))
+            if num(sh.v(u, lab + 1)) is None and head and head not in DASHES:
                 break
             first = u
         if first >= r or (subtotal is not None and first >= subtotal):
@@ -242,7 +247,7 @@ def check_grids(sh, last, out):
         if g.prem:
             for r in range(g.first, g.last + 1):
                 c, b = sh.v(r, g.prem), num(sh.v(r, g.v1))
-                if text(c) in ("-", "\u2013", "\u2014"):
+                if text(c) in DASHES:
                     continue
                 cv = num(c)
                 if cv is None:
@@ -351,8 +356,18 @@ def check_text(sh, last, out):
         out.append(Finding(WARN, sh.ref(2, pcol), "purpose line is %d chars (max %d): %r"
                            % (len(purpose), MAX_PURPOSE, purpose)))
 
-    notes = [r for r in range(1, last + 1)
-             if text(sh.v(r, 1)) and (sh.cell(r, 1).font.size or 10) <= 8]
+    # The rationale block is the contiguous 8 pt run at the foot of the sheet.
+    # An 8 pt block higher up -- an "optional" fallback section demoted out of the
+    # main step list -- is not a rationale note and does not count against the budget.
+    small = lambda r: (sh.cell(r, 1).font.size or 10) <= 8
+    r = last
+    while r >= 1 and not text(sh.v(r, 1)):
+        r -= 1
+    notes = []
+    while r >= 1 and text(sh.v(r, 1)) and small(r):
+        notes.append(r)
+        r -= 1
+    notes.reverse()
     bullets = [r for r in notes if text(sh.v(r, 1)).startswith("•")]
     if not notes:
         out.append(Finding(WARN, "", "no 8 pt rationale notes found at the bottom"))
