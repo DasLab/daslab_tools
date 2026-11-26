@@ -176,8 +176,8 @@ def get_stems( line, chainbreak_pos, left_bracket_char = '(', right_bracket_char
             pair_map[ res1 ] = res2
             pair_map[ res2 ] = res1
             all_pairs.append( [res1,res2] )
-            if fasta_entities[ res2-1 ] in complement.keys() and len( fasta_entities ) > 0 and not ( fasta_entities[res1-1] in complement[ fasta_entities[res2-1] ] ):
-                raise ValidationError( "Not complementary at positions %s%d and %s%d!"  % (fasta_entities[res1-1],res1,fasta_entities[res2-1],res2) )
+            if len( fasta_entities ) > 0 and fasta_entities[ res2-1 ] in complement.keys() and not ( fasta_entities[res1-1] in complement[ fasta_entities[res2-1] ] ):
+                print( "WARNING: Not complementary at positions %s%d and %s%d!"  % (fasta_entities[res1-1],res1,fasta_entities[res2-1],res2) )
     #print(pair_map)
 
     if ( len (left_brackets) > 0 ):
