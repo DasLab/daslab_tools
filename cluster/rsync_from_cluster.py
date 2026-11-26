@@ -3,7 +3,7 @@
 import argparse
 import subprocess
 import sys
-from os import system
+from shlex import quote
 from os.path import abspath
 from cluster_info import cluster_check, strip_home_dirname
 
@@ -47,16 +47,20 @@ if not filenames:
 clusterdir = remotedir + strip_home_dirname(abspath('.'))
 cluster_prefix = cluster + ':' if cluster else ''
 
+# The remote path is parsed by a shell ON THE CLUSTER, so it must be quoted for that shell
+# (Google Drive paths contain spaces).  Plain double quotes are eaten by the local shell first;
+# shlex.quote() survives, and passing argv as a list keeps the local shell out entirely.
 commands = []
 for filename in filenames:
-    remote_spec = '"' + cluster_prefix + clusterdir + '/' + filename + '"'
-    command = 'rsync -avL ' + remote_spec + ' . ' + ' '.join(extra_args)
-    print(command)
-    system(command)
-    commands.append(command)
+    remote_spec = (cluster_prefix + quote(clusterdir + '/' + filename) if cluster
+                   else clusterdir + '/' + filename)
+    cmd = ['rsync', '-avL', remote_spec, '.'] + extra_args
+    print(' '.join(quote(c) for c in cmd))
+    subprocess.run(cmd)
+    commands.append(cmd)
 
 print()
 print('Ran the following commands:')
-for command in commands:
+for cmd in commands:
     print()
-    print(command)
+    print(' '.join(quote(c) for c in cmd))

@@ -2,6 +2,7 @@
 
 import argparse
 import os
+import shlex
 import subprocess
 import sys
 from os.path import abspath
@@ -46,9 +47,9 @@ if cluster == '':
         sys.exit(1)
     print(target)
 else:
-    print('Different filesystem (%s). SSH there with:' % args.destination)
-    print('  ssh %s' % cluster)
-    print('Then cd to the equivalent directory:')
-    print('  cd %s' % target)
+    print('Different filesystem (%s). SSH there with:' % args.destination, file=sys.stderr)
+    print('  ssh %s' % cluster, file=sys.stderr)
+    print('Then cd to the equivalent directory:', file=sys.stderr)
+    print('  cd %s' % shlex.quote(target), file=sys.stderr)   # Drive paths contain spaces
     sys.exit(1)
 

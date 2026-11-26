@@ -3,7 +3,7 @@
 import argparse
 import subprocess
 import sys
-from os import system
+from shlex import quote
 from os.path import abspath, expanduser, basename
 from cluster_info import cluster_check, strip_home_dirname
 
@@ -44,19 +44,30 @@ for m in args.files_and_flags:
 if not dirs:
     dirs = ['.']
 
-clusterdir = '"' + remotedir + strip_home_dirname(abspath('.')) + '"'
+clusterdir = remotedir + strip_home_dirname(abspath('.'))
 
-command = 'mkdir -p ' + clusterdir
+# Paths under Google Drive contain spaces ("Shared drives", "Das Lab", ...).  The remote path
+# is interpreted by a shell ON THE CLUSTER -- once by ssh for the mkdir, and again by rsync's
+# own `ssh host rsync --server ...` -- so it has to be quoted FOR that shell.  Wrapping it in
+# double quotes is not enough: the LOCAL shell consumes those first, and the remote mkdir then
+# word-splits the path into several directories.  shlex.quote() produces quoting that survives
+# to the remote side, and passing argv as a list keeps the local shell out of it entirely.
+# (rsync's -s/--protect-args would also fix this, but macOS ships openrsync, which lacks it.)
+remote_q = quote(clusterdir)
+
+
+def run(cmd):
+    print(' '.join(quote(c) for c in cmd))
+    return subprocess.run(cmd).returncode
+
+
 if cluster:
-    command = 'ssh ' + cluster + ' ' + command
-print(command)
-system(command)
+    run(['ssh', cluster, 'mkdir -p ' + remote_q])
+    dest = cluster + ':' + remote_q
+else:
+    run(['mkdir', '-p', clusterdir])
+    dest = clusterdir
 
-cluster_prefix = cluster + ':' if cluster else ''
-command = 'rsync -avL ' + ' '.join(dirs) + ' ' + cluster_prefix + clusterdir + ' ' + ' '.join(extra_args)
-print(command)
-system(command)
-
-print()
-print('Ran the following command:')
-print(command)
+rc = run(['rsync', '-avL'] + dirs + [dest] + extra_args)
+if rc != 0:
+    sys.exit(rc)
